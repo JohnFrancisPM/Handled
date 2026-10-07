@@ -1,0 +1,3 @@
+- [Project Overview](project-handled.md) — Handled is an AI office manager for home-service SMBs; three apps (website, customer-app, test-harness) built via a 7-stage workflow
+- [Website Decisions](decisions-website.md) — Key architectural decisions for the marketing website engineering doc
+- [Run History](run-history.md) — Log of each engineering-planner invocation, app, cycles, and verdict

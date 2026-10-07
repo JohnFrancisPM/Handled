@@ -1,0 +1,20 @@
+# Netlify configuration for the Handled marketing website.
+# Monorepo layout: the website lives in apps/website, so the build runs from
+# that base directory. This file lives at the REPO ROOT and Netlify reads it
+# automatically once the repo is connected — no manual UI build settings needed.
+
+[build]
+  # Build runs with this as the working directory.
+  base = "apps/website"
+  command = "npm run build"
+
+[build.environment]
+  # Pin Node to the version the app was built/tested against (spec: Node 20 LTS).
+  NODE_VERSION = "20"
+
+# Next.js on Netlify.
+# The Next Runtime renders the 9 App Router pages as static assets and turns the
+# /api/leads Route Handler (export const runtime = "nodejs") into a Netlify
+# Function automatically. Do NOT set `publish` manually — the runtime manages it.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

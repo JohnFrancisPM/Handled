@@ -1,2 +1,5 @@
 .claude/skills/.DS_Store
 .DS_Store
+
+# Netlify CLI link state — must never be committed
+.netlify

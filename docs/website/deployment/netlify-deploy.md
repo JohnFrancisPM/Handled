@@ -136,7 +136,7 @@ There is no env override for this by design (MVP decision in the specs); change 
 
 ## 8. Known deferrals (not blockers, but worth doing before public launch)
 
-- **OG image + favicon binaries not created.** `lib/seo.ts` references `/og-default.png` and `/favicon.ico`; add real files to `apps/website/public/` for rich social cards and a browser icon. Metadata resolves fine without them.
+- **OG image + favicon are on-brand placeholders.** `apps/website/public/` now ships `og-default.png` (1200×630), `favicon.ico` (multi-size), and `icon.png` (180×180 Apple touch icon), all referenced by `lib/seo.ts`. Swap them for final brand artwork before public launch if desired.
 - **Lighthouse CI not wired.** axe-core a11y runs in the E2E suite (zero serious/critical on key pages), but the Perf ≥90 / A11y ≥90 budget (spec §R31) is not gated. Consider a Lighthouse CI step.
 - **Legal copy is launch-ready boilerplate** tailored to what the site does; have a lawyer review `app/privacy/page.tsx` and `app/terms/page.tsx` before public launch.
 - **Testimonials are illustrative placeholders** — replace with real, attributed quotes before launch.

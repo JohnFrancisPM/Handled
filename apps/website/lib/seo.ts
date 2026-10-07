@@ -15,7 +15,7 @@ export function baseMetadata(): Metadata {
     },
     twitter: { card: "summary_large_image", title: site.name, description: site.positioning, images: ["/og-default.png"] },
     robots: { index: true, follow: true },
-    icons: { icon: "/favicon.ico" }
+    icons: { icon: "/favicon.ico", apple: "/icon.png" }
   };
 }
 

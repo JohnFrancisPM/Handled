@@ -6,6 +6,11 @@ import { rateLimit } from "@/lib/rate-limit";
 export const runtime = "nodejs";          // required so the service-role client can run (ED §9)
 export const dynamic = "force-dynamic";   // never statically cache the endpoint
 
+// Reject oversized payloads before parsing (defense-in-depth). The form is a
+// handful of short fields; a well-formed request is well under 16 KB. Non-POST
+// methods are rejected automatically by Next (405) since only POST is exported.
+const MAX_BODY_BYTES = 16 * 1024;
+
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
@@ -18,6 +23,11 @@ export async function POST(req: NextRequest) {
           headers: rl.retryAfterSec ? { "Retry-After": String(rl.retryAfterSec) } : undefined
         }
       );
+    }
+
+    const contentLength = Number(req.headers.get("content-length") ?? 0);
+    if (contentLength > MAX_BODY_BYTES) {
+      return NextResponse.json({ ok: false, error: "payload_too_large" }, { status: 413 });
     }
 
     const json = await req.json().catch(() => null);

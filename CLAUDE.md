@@ -120,7 +120,20 @@ Same single-test invocation as the website (`npm run test -- <file>`). Node **20
 
 ### Deploying the customer-app
 
-Live at `handled-customer-app.netlify.app` on its **own Netlify site** (`handled-customer-app`), separate from the website's site. Deploys go through the **Netlify MCP connector** (same zip-upload flow as the website — there's no Git↔Netlify auto-deploy, and the connector doesn't fully honor `.gitignore`, so strip `node_modules`/`.next` before upload). The deploy config is `apps/customer-app/netlify.toml` (`base = apps/customer-app`, `@netlify/plugin-nextjs`, Node 20) — **not** the repo-root `netlify.toml`, which is the website's. The `.netlify/` link state and the generated edge-bundle are gitignored. Setting the dashboard's Supabase auth env (`NEXT_PUBLIC_SUPABASE_URL` / `_ANON_KEY`, service role) switches it out of read-only demo mode.
+Live at `handled-customer-app.netlify.app` on its **own Netlify site** (`handled-customer-app`), separate from the website's site. There's no Git↔Netlify auto-deploy.
+
+**Deploy with the local Netlify CLI, from `apps/customer-app`:**
+
+```bash
+cd apps/customer-app
+npx netlify-cli deploy --build --prod   # local build (incl. @netlify/plugin-nextjs) + prod upload
+```
+
+This builds locally and uploads the prebuilt output. It works because the CLI runs against the **real git root**, so `apps/customer-app/netlify.toml`'s `base = "apps/customer-app"` resolves correctly. The config (`base`, `@netlify/plugin-nextjs`, Node 20) is `apps/customer-app/netlify.toml` — **not** the repo-root `netlify.toml`, which is the website's. The `.netlify/` link state (`state.json` → the site id) and the generated build output are gitignored.
+
+**Do NOT use the Netlify MCP connector (`deploy-site`) for this app.** It uploads only the `apps/customer-app` subdir as the build root, so `base = "apps/customer-app"` then points at a nonexistent nested dir and the build fails at config parsing (`Base directory does not exist`). A full-repo upload would instead read the root `netlify.toml` and build the *website*. The local CLI is the only path that resolves the monorepo correctly here.
+
+Netlify serves its own `Strict-Transport-Security` (1-year), which supersedes the 2-year value in `next.config.mjs`; the other security headers (CSP, X-Frame-Options, Referrer-Policy, Permissions-Policy, nosniff) come from `next.config.mjs`. Setting the dashboard's Supabase auth env (`NEXT_PUBLIC_SUPABASE_URL` / `_ANON_KEY`, service role) switches it out of read-only demo mode.
 
 ### n8n backend (`n8n/`) — deploying now
 

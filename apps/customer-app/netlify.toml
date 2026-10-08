@@ -1,0 +1,20 @@
+# Netlify configuration for the Handled customer-app dashboard.
+#
+# Monorepo note: the REPO ROOT netlify.toml targets apps/website. This per-app
+# file is used when the Netlify site's base directory is set to apps/customer-app
+# (a separate Netlify site from the marketing website). Same platform + Next
+# Runtime across all apps in the monorepo.
+
+[build]
+  base = "apps/customer-app"
+  command = "npm run build"
+
+[build.environment]
+  # Pin Node to the version the app was built/tested against (spec: Node 20 LTS).
+  NODE_VERSION = "20"
+
+# Next.js on Netlify. The Next Runtime renders App Router pages and turns the
+# Route Handlers (export const runtime = "nodejs") into Netlify Functions.
+# Do NOT set `publish` manually — the runtime manages it.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

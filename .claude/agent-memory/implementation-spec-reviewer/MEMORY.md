@@ -1,1 +1,2 @@
 - [Website spec review log](website-review-log.md) — per-round verdicts and gaps for the `website` app implementation specs
+- [customer-app spec review log](customer-app-review-log.md) — per-round verdicts and gaps for the `customer-app` (Handled customer experience) implementation specs

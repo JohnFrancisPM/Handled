@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Handled n8n — Diagram 1: Intake &amp; Screening</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{background:#FAFAFA;margin:0;padding:40px 24px;font-family:'Inter',system-ui,sans-serif;color:#070A0E}
+.an{max-width:900px;margin:0 auto}
+.panel{background:#fff;border:1px solid #DADADB;border-radius:12px;padding:24px}
+.h5{font:600 22px/28px 'Inter';margin:0 0 4px;color:#070A0E}
+.psub{font:400 12px/18px 'Inter';color:#4A4C4F;margin:0 0 24px}
+.row{display:flex;gap:12px;align-items:stretch;flex-wrap:wrap}
+.node{flex:1;min-width:280px;background:#fff;border:1px solid #DADADB;border-radius:8px;padding:12px 16px}
+.nt{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.nm{font:500 16px/24px 'Inter';color:#070A0E}
+.ns{font:400 12px/18px 'Inter';color:#4A4C4F;margin-top:4px}
+.badge{font:500 12px/16px 'Inter';border-radius:4px;padding:2px 8px;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.chip{font:400 12px/16px 'Inter';background:#FAFAFA;border:1px solid #DADADB;color:#4A4C4F;border-radius:4px;padding:2px 6px}
+.conn{display:flex;align-items:center;justify-content:center;color:#8F9193;font-size:14px}
+.ar{display:flex;justify-content:center;color:#8F9193;font-size:15px;margin:3px 0}
+.exit{width:230px;flex:none;border-radius:8px;padding:12px 16px;border:1px solid}
+.leg{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;border-top:1px solid #F0F0F1;padding-top:16px}
+</style>
+</head>
+<body>
+<div class="an"><div class="panel">
+<h2 class="h5">Diagram 1 — Intake &amp; screening</h2>
+<p class="psub">Entry webhook, validation &amp; auth, context loader, context gate, and the spam / injection guard</p>
+
+<div class="row">
+  <div class="node"><div class="nt"><span class="nm">Webhook + validate &amp; auth</span><span class="badge" style="background:#F0F0F1;border:1px solid #C1C2C3;color:#4A4C4F">Code</span></div>
+  <div class="ns">Receives one inbound text, then checks the shared secret and required fields. No AI · no tools.</div>
+  <div class="chips"><span class="chip">POST /webhook/handled/message</span><span class="chip">X-Handled-Secret</span></div></div>
+  <div class="conn">&rarr;</div>
+  <div class="exit" style="background:#FAEBEB;border-color:#EAA2A3"><div class="nm" style="color:#942528">Respond 4xx</div><div class="ns" style="color:#731D1F">401 unauthorized · 400 validation — wrong secret or bad fields</div></div>
+</div>
+<div class="ar">&darr;</div>
+
+<div class="row">
+  <div class="node"><div class="nt"><span class="nm">Context loader</span><span class="badge" style="background:#F0F0F1;border:1px solid #C1C2C3;color:#4A4C4F">Code · Supabase reads</span></div>
+  <div class="ns">Builds the context bundle every later step reuses; resolves the org and the customer. No AI.</div>
+  <div class="chips"><span class="chip">organizations</span><span class="chip">business_profiles</span><span class="chip">services</span><span class="chip">service_pricing</span><span class="chip">service_areas</span><span class="chip">business_hours</span><span class="chip">technicians</span><span class="chip">emergency_rules</span><span class="chip">end_customers</span><span class="chip">conversations</span><span class="chip">messages</span><span class="chip">appointments</span></div></div>
+</div>
+<div class="ar">&darr;</div>
+
+<div class="row">
+  <div class="node"><div class="nt"><span class="nm">Context gate</span><span class="badge" style="background:#F0F0F1;border:1px solid #C1C2C3;color:#4A4C4F">Switch</span></div>
+  <div class="ns">Routes on the loader's control signal. No AI.</div>
+  <div class="chips"><span class="chip">ok &rarr;</span><span class="chip">not_found</span><span class="chip">opted_out</span><span class="chip">duplicate</span></div></div>
+  <div class="conn">&rarr;</div>
+  <div class="exit" style="background:#FFF9F0;border-color:#FFE3BD"><div class="nm" style="color:#B36800">Early exits</div><div class="ns" style="color:#854D00">404 unknown business · opt-out (200) · idempotent replay (stored response)</div></div>
+</div>
+<div class="ar">&darr;</div>
+
+<div class="row">
+  <div class="node"><div class="nt"><span class="nm">Guard — spam + injection</span><span class="badge" style="background:#E7EFFC;border:1px solid #B6CFF5;color:#0D469E">AI · Claude Haiku</span></div>
+  <div class="ns">Classifies each message on two axes; its output is never sent to the customer.</div>
+  <div class="chips"><span class="chip">temperature 0</span><span class="chip">256 tokens</span><span class="chip">no Supabase tools</span></div></div>
+  <div class="conn">&rarr;</div>
+  <div class="exit" style="background:#FAEBEB;border-color:#EAA2A3"><div class="nm" style="color:#942528">Blocked (200)</div><div class="ns" style="color:#731D1F">spam → persisted, not billed · injection → safe refusal</div></div>
+</div>
+
+<div class="leg">
+  <span class="badge" style="background:#F0F0F1;border:1px solid #C1C2C3;color:#4A4C4F">Code / switch</span>
+  <span class="badge" style="background:#E7EFFC;border:1px solid #B6CFF5;color:#0D469E">Claude Haiku (AI)</span>
+  <span class="badge" style="background:#FAEBEB;border:1px solid #EAA2A3;color:#942528">Blocked / error</span>
+  <span class="badge" style="background:#FFF9F0;border:1px solid #FFE3BD;color:#B36800">Early exit</span>
+  <span class="badge" style="background:#E7EFFC;border:1px solid #B6CFF5;color:#0D469E">legit → Diagram 2</span>
+</div>
+</div></div>
+</body>
+</html>

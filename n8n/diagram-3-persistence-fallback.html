@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Handled n8n — Diagram 3: Persistence &amp; Fallback</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{background:#FAFAFA;margin:0;padding:40px 24px;font-family:'Inter',system-ui,sans-serif;color:#070A0E}
+.an{max-width:900px;margin:0 auto}
+.panel{background:#fff;border:1px solid #DADADB;border-radius:12px;padding:24px}
+.h5{font:600 22px/28px 'Inter';margin:0 0 4px;color:#070A0E}
+.psub{font:400 12px/18px 'Inter';color:#4A4C4F;margin:0 0 24px}
+.cols{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.col{flex:1;min-width:280px;display:flex;flex-direction:column}
+.src{font:400 12px/18px 'Inter';color:#4A4C4F;margin-bottom:6px}
+.node{background:#fff;border:1px solid #DADADB;border-radius:8px;padding:12px 16px}
+.nt{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.nm{font:500 16px/24px 'Inter';color:#070A0E}
+.ns{font:400 12px/18px 'Inter';color:#4A4C4F;margin-top:4px}
+.badge{font:500 12px/16px 'Inter';border-radius:4px;padding:2px 8px;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.chip{font:400 12px/16px 'Inter';background:#FAFAFA;border:1px solid #DADADB;color:#4A4C4F;border-radius:4px;padding:2px 6px}
+.ar{display:flex;justify-content:center;color:#8F9193;font-size:15px;margin:4px 0}
+.leg{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;border-top:1px solid #F0F0F1;padding-top:16px}
+.note{font:500 12px/16px 'Inter';color:#4A4C4F;text-align:center;margin-top:16px;background:#F0F0F1;border-radius:4px;padding:6px 8px}
+</style>
+</head>
+<body>
+<div class="an"><div class="panel">
+<h2 class="h5">Diagram 3 — Persistence &amp; fallback</h2>
+<p class="psub">Saving the turn and returning a reply — plus the safety net that keeps every response a 200</p>
+
+<div class="cols">
+  <div class="col">
+    <div class="src">from specialist agent output &darr;</div>
+    <div class="node"><div class="nt"><span class="nm">Persist + eval</span><span class="badge" style="background:#F0F0F1;border:1px solid #C1C2C3;color:#4A4C4F">Code · Supabase writes</span></div>
+    <div class="ns">Saves both turns and the scoring record, then updates the conversation. No AI.</div>
+    <div class="chips"><span class="chip">messages — user turn</span><span class="chip">messages — assistant + eval</span><span class="chip">conversations · last_intent</span><span class="chip">conversations · status</span></div></div>
+    <div class="ar">&darr;</div>
+    <div class="node" style="background:#E7F6E7;border-color:#92D490"><div class="nt"><span class="nm" style="color:#0D720A">Respond — normal (200)</span><span class="badge" style="background:#fff;border:1px solid #92D490;color:#0D720A">success</span></div>
+    <div class="ns" style="color:#0A5908">reply + intent + agent + actions + conversation_id + eval · billed: true</div></div>
+  </div>
+
+  <div class="col">
+    <div class="src">from any LLM / agent / persist error &darr;</div>
+    <div class="node" style="background:#FFF9F0;border-color:#FFE3BD"><div class="nt"><span class="nm" style="color:#B36800">Fallback handler</span><span class="badge" style="background:#fff;border:1px solid #FFE3BD;color:#B36800">Code · safety net</span></div>
+    <div class="ns" style="color:#854D00">Composes a safe reply whenever any upstream step errors. Emergency-aware. No AI.</div>
+    <div class="chips"><span class="chip">messages — fallback</span><span class="chip">notifications — owner</span><span class="chip">escalations — if emergency-like</span></div></div>
+    <div class="ar">&darr;</div>
+    <div class="node" style="background:#FFF9F0;border-color:#FFE3BD"><div class="nt"><span class="nm" style="color:#B36800">Respond — fallback (200)</span><span class="badge" style="background:#fff;border:1px solid #FFE3BD;color:#B36800">safe</span></div>
+    <div class="ns" style="color:#854D00">intent: fallback · billed: false · never a 500 — the sender always gets a 200</div></div>
+  </div>
+</div>
+
+<div class="note">Persist errors also route to the fallback handler · both paths always return HTTP 200</div>
+
+<div class="leg">
+  <span class="badge" style="background:#F0F0F1;border:1px solid #C1C2C3;color:#4A4C4F">Code · Supabase writes</span>
+  <span class="badge" style="background:#E7F6E7;border:1px solid #92D490;color:#0D720A">Success response</span>
+  <span class="badge" style="background:#FFF9F0;border:1px solid #FFE3BD;color:#B36800">Fallback / safety</span>
+</div>
+</div></div>
+</body>
+</html>

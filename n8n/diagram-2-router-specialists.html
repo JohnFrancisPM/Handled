@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Handled n8n — Diagram 2: Routing &amp; Specialists</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{background:#FAFAFA;margin:0;padding:40px 24px;font-family:'Inter',system-ui,sans-serif;color:#070A0E}
+.an{max-width:900px;margin:0 auto}
+.panel{background:#fff;border:1px solid #DADADB;border-radius:12px;padding:24px}
+.h5{font:600 22px/28px 'Inter';margin:0 0 4px;color:#070A0E}
+.psub{font:400 12px/18px 'Inter';color:#4A4C4F;margin:0 0 24px}
+.node{background:#fff;border:1px solid #DADADB;border-radius:8px;padding:12px 16px}
+.nt{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.nmwrap{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.nm{font:500 16px/24px 'Inter';color:#070A0E}
+.ns{font:400 12px/18px 'Inter';color:#4A4C4F;margin-top:4px}
+.badge{font:500 12px/16px 'Inter';border-radius:4px;padding:2px 8px;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.chip{font:400 12px/16px 'Inter';background:#FAFAFA;border:1px solid #DADADB;color:#4A4C4F;border-radius:4px;padding:2px 6px}
+.ar{display:flex;justify-content:center;color:#8F9193;font-size:15px;margin:3px 0}
+.leg{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;border-top:1px solid #F0F0F1;padding-top:16px}
+.grid{display:flex;flex-direction:column;gap:8px}
+</style>
+</head>
+<body>
+<div class="an"><div class="panel">
+<h2 class="h5">Diagram 2 — Routing &amp; specialists</h2>
+<p class="psub">Intent / language router and the six specialist agents that share one Claude Sonnet model</p>
+
+<div class="node"><div class="nt"><span class="nm">Router — intent + language</span><span class="badge" style="background:#E7EFFC;border:1px solid #B6CFF5;color:#0D469E">AI · Claude Haiku</span></div>
+<div class="ns">Picks exactly one intent and detects language (en / es) and multi-intent; output is not sent to the customer. Biases toward emergency when unsure.</div>
+<div class="chips"><span class="chip">temperature 0</span><span class="chip">256 tokens</span><span class="chip">book</span><span class="chip">reschedule</span><span class="chip">cancel</span><span class="chip">emergency</span><span class="chip">pricing</span><span class="chip">out_of_area</span><span class="chip">faq</span></div></div>
+<div class="ar">&darr;</div>
+
+<div class="node" style="background:#F7F0FF;border-color:#E3C7FF"><div class="nt"><span class="nm" style="color:#380070">All 6 specialists share one Claude Sonnet model node</span><span class="badge" style="background:#fff;border:1px solid #E3C7FF;color:#6600CC">AI · Claude Sonnet</span></div>
+<div class="ns" style="color:#5700AD">temperature 0.3 · 1024 tokens · least-privilege tools · no raw SQL · routed to exactly one agent</div></div>
+<div class="ar">&darr;</div>
+
+<div class="grid">
+  <div class="node"><div class="nt"><div class="nmwrap"><span class="nm">New-Booking agent</span><span class="badge" style="background:#F0F0F1;border:1px solid #C1C2C3;color:#4A4C4F">intent: book</span></div><span class="badge" style="background:#F7F0FF;border:1px solid #E3C7FF;color:#6600CC">Claude Sonnet</span></div>
+  <div class="ns">Schedules a new service visit — readback + confirm + re-check availability before any write.</div>
+  <div class="chips"><span class="chip">check_service_offered</span><span class="chip">validate_service_area</span><span class="chip">check_availability</span><span class="chip">lookup_technician</span><span class="chip">get_service_pricing</span><span class="chip">create_appointment</span><span class="chip">add_waitlist</span><span class="chip">capture_notes</span><span class="chip">capture_lead</span></div></div>
+
+  <div class="node"><div class="nt"><div class="nmwrap"><span class="nm">Reschedule-Cancel agent</span><span class="badge" style="background:#F0F0F1;border:1px solid #C1C2C3;color:#4A4C4F">intent: reschedule / cancel</span></div><span class="badge" style="background:#F7F0FF;border:1px solid #E3C7FF;color:#6600CC">Claude Sonnet</span></div>
+  <div class="ns">Moves or cancels an existing appointment.</div>
+  <div class="chips"><span class="chip">check_availability</span><span class="chip">lookup_appointment</span><span class="chip">update_appointment</span><span class="chip">cancel_appointment</span></div></div>
+
+  <div class="node"><div class="nt"><div class="nmwrap"><span class="nm">Emergency-Triage agent</span><span class="badge" style="background:#F0F0F1;border:1px solid #C1C2C3;color:#4A4C4F">intent: emergency</span></div><span class="badge" style="background:#F7F0FF;border:1px solid #E3C7FF;color:#6600CC">Claude Sonnet</span></div>
+  <div class="ns">Handles life-safety situations — advises, logs, and escalates for dispatch.</div>
+  <div class="chips"><span class="chip">match_emergency_rule</span><span class="chip">advise_safety</span><span class="chip">escalate_to_human</span><span class="chip">log_emergency</span></div></div>
+
+  <div class="node"><div class="nt"><div class="nmwrap"><span class="nm">Pricing-Quote agent</span><span class="badge" style="background:#F0F0F1;border:1px solid #C1C2C3;color:#4A4C4F">intent: pricing</span></div><span class="badge" style="background:#F7F0FF;border:1px solid #E3C7FF;color:#6600CC">Claude Sonnet</span></div>
+  <div class="ns">Answers cost / quote questions using configured price ranges only.</div>
+  <div class="chips"><span class="chip">check_service_offered</span><span class="chip">get_service_pricing</span><span class="chip">capture_lead</span></div></div>
+
+  <div class="node"><div class="nt"><div class="nmwrap"><span class="nm">Out-of-Area agent</span><span class="badge" style="background:#F0F0F1;border:1px solid #C1C2C3;color:#4A4C4F">intent: out_of_area</span></div><span class="badge" style="background:#F7F0FF;border:1px solid #E3C7FF;color:#6600CC">Claude Sonnet</span></div>
+  <div class="ns">Handles requests outside the service area and captures the lead.</div>
+  <div class="chips"><span class="chip">validate_service_area</span><span class="chip">capture_lead</span></div></div>
+
+  <div class="node"><div class="nt"><div class="nmwrap"><span class="nm">General-FAQ agent</span><span class="badge" style="background:#F0F0F1;border:1px solid #C1C2C3;color:#4A4C4F">intent: faq / else</span></div><span class="badge" style="background:#F7F0FF;border:1px solid #E3C7FF;color:#6600CC">Claude Sonnet</span></div>
+  <div class="ns">Answers questions, status / ETA, confirmations, callbacks, opt-out, and human handoff.</div>
+  <div class="chips"><span class="chip">lookup_appointment</span><span class="chip">get_service_pricing</span><span class="chip">get_business_facts</span><span class="chip">mark_confirmed</span><span class="chip">capture_notes</span><span class="chip">schedule_callback</span><span class="chip">capture_lead</span><span class="chip">escalate_to_human</span><span class="chip">honor_optout</span></div></div>
+</div>
+
+<div class="leg">
+  <span class="badge" style="background:#E7EFFC;border:1px solid #B6CFF5;color:#0D469E">Claude Haiku — classifier (AI)</span>
+  <span class="badge" style="background:#F7F0FF;border:1px solid #E3C7FF;color:#6600CC">Claude Sonnet — specialist (AI)</span>
+  <span class="badge" style="background:#F0F0F1;border:1px solid #C1C2C3;color:#4A4C4F">intent · tool</span>
+</div>
+</div></div>
+</body>
+</html>

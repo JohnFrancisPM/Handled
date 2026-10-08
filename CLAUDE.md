@@ -32,7 +32,7 @@ docs/
   PRD.md               Product requirements (all apps)   ·   design.md  Brand design system (tokens)
   Competitive Research.md · evals.xlsx   Supporting research / eval insights
   website/             Website specs: engineering/ (HLD), implementation/ (per-concern + supabase-schema.sql + .env.example), deployment/ (netlify-deploy.md)
-  customer-app/        Customer-app specs: engineering/engineering-doc.md + implementation/*.md (incl. n8n-*.md, supabase-schema.sql, .env.example, eval-pipeline.md, seed-data.md)
+  customer-app/        Customer-app specs: engineering/engineering-doc.md + implementation/*.md (incl. n8n-*.md, supabase-schema.sql, .env.example, eval-pipeline.md, seed-data.md) + security/security-plan.md (Stage 7 review)
   security/            security-plan.md (website Stage 7 review)
   <App>/               (future) each new app gets its own engineering/ + implementation/ tree here
 dev-os/                The stage-gated build workflow "operating system" (see dev-os/README.md)
@@ -67,7 +67,7 @@ Node **20 LTS** (pinned for Netlify in `netlify.toml`). The `@/` import alias ma
 
 ### Architecture
 
-**Content-driven pages.** Page files in `app/*/page.tsx` contain almost no literal copy. They import typed data from `content/*.ts` (e.g. `pricing.ts`, `faqs.ts`, `comparison.ts`, `nav.ts`, `site.ts`) and pass it into presentational components in `components/marketing/`. To change site copy, edit the `content/` module — not the page or the component. `content/site.ts` is the single source for brand name, URLs, CTAs, and the trades list.
+**Content-driven pages.** Page files in `app/*/page.tsx` contain almost no literal copy. They import typed data from `content/*.ts` (e.g. `pricing.ts`, `faqs.ts`, `comparison.ts`, `nav.ts`, `site.ts`) and pass it into presentational components in `components/marketing/`. To change site copy, edit the `content/` module — not the page or the component. `content/site.ts` is the single source for brand name, URLs, CTAs, and the trades list. It also holds `loginCta` — the site's **one cross-app link**, a hardcoded URL to the customer-app dashboard login (`handled-customer-app.netlify.app/login`), rendered as a "Log in" button in `Nav.tsx` + `MobileNav.tsx`. If the dashboard's domain changes, update it here.
 
 **Design tokens are the only styling source.** Raw token values live as CSS variables in `app/globals.css`, are exposed to Tailwind in `tailwind.config.ts` (e.g. `bg-brand`, `text-grey-900`, spacing scale, radii), and are enforced by the **design-system skill**. Never introduce arbitrary hex colors, spacing, or font sizes — only use tokens / the Tailwind classes wired to them. Apply `/design-system` whenever writing UI.
 
@@ -146,7 +146,7 @@ This builds locally and uploads the prebuilt output. It works because the CLI ru
 
 Netlify serves its own `Strict-Transport-Security` (1-year), which supersedes the 2-year value in `next.config.mjs`; the other security headers (CSP, X-Frame-Options, Referrer-Policy, Permissions-Policy, nosniff) come from `next.config.mjs`. Setting the dashboard's Supabase auth env (`NEXT_PUBLIC_SUPABASE_URL` / `_ANON_KEY`, service role) switches it out of read-only demo mode.
 
-### n8n backend (`n8n/`) — deploying now
+### n8n backend (`n8n/`)
 
 One importable workflow, `n8n/handled-agentic.json` (52 nodes), is the **single agentic webhook**: `POST /webhook/handled/message` runs **Validate/Auth → Context Loader → spam/injection Guard (Haiku) → intent Router (Haiku) → one of 6 specialist agents (shared Sonnet node) → 20 org-scoped Supabase REST tools → Persist+Eval**, and always returns a fixed JSON envelope (even failures return `200` with an `intent:"fallback"` reply — never a 500). The request/response contract is fixed in `docs/customer-app/implementation/n8n-webhook-contract.md`; tools and the tool→agent matrix in `n8n-tools.md`; prompts in `n8n-agent-prompts.md`.
 
@@ -160,7 +160,7 @@ One importable workflow, `n8n/handled-agentic.json` (52 nodes), is the **single 
 ### Evals — two separate halves
 
 1. **Builder-side export** (`scripts/`): `export-evals.ts` pulls scored assistant turns and writes an Azure AI Foundry JSONL (`{question,response,citation,reasoning}` per row) + an `eval_exports` audit row. It delegates the pure DB-rows→JSONL transform to `eval-jsonl.ts` (unit-tested without a DB). Runs **outside** the app (service-role, direct DB pull) — there is deliberately no dashboard Evals page or `/api/evals/export` route. See `scripts/README.md` and `docs/customer-app/implementation/eval-pipeline.md`.
-2. **Graded launch-gate loop** (`apps/customer-app/tests/eval/`): the 50 `evals.xlsx` cases (committed as `eval-cases.json`) run through the live agent via `run-eval.ts` (a standalone `tsx` script — **not** a `*.test.ts`, so `npm run test` skips it), scored by the pure `score.ts` (which *is* unit-tested in `tests/unit/eval-scoring.test.ts`). It enforces the gates **any Critical failure blocks launch; emergency recall must = 100%**. It has **not** been run here (no reachable n8n/Anthropic) — run it at Stage 6 against the deployed webhook. See `tests/eval/README.md`.
+2. **Graded launch-gate loop** (`apps/customer-app/tests/eval/`): the 50 `evals.xlsx` cases (committed as `eval-cases.json`) run through the live agent via `run-eval.ts` (a standalone `tsx` script — **not** a `*.test.ts`, so `npm run test` skips it), scored by the pure `score.ts` (which *is* unit-tested in `tests/unit/eval-scoring.test.ts`). It enforces the gates **any Critical failure blocks launch; emergency recall must = 100%**. It has **not** been run here (no reachable n8n/Anthropic) — run it against the deployed n8n webhook once that backend is live (the dashboard is deployed; importing/activating the n8n workflow is a separate step). See `tests/eval/README.md`.
 
 ---
 

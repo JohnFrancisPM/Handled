@@ -96,6 +96,7 @@
 - The test harness should mimic SMS messaging so it looks like a user is texting Acme Plumbing.
 - I will use this to actually test out the flow.
 - Use the 30 customers backfilled into the example customer above to load up the test harness 
+- I would like to be able to click 1 button and mimic multiple customers reaching out. The customers should cover the variety of scenarios documented in the evals.xlsx and even more.
 
 # Evaluations
 - The current evals assume a phone conversation but for this exercise I want to focus on text inputs only

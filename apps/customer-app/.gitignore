@@ -1,5 +1,7 @@
 node_modules
 .next
+.netlify
+deno.lock
 .env*.local
 coverage
 playwright-report

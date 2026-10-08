@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | App | Location | Status | What it is |
 |---|---|---|---|
 | **Marketing website** | `apps/website` | ✅ **Built & live** (Stages 1–7 done, deployed to Netlify) | Static-first public site. No AI; marketing + one lead-capture endpoint. |
-| **Customer experience** | `apps/customer-app` + `n8n/` | 🏗️ **Built, Stages 1–4** (dashboard + Supabase schema/seed + n8n agentic backend). Not yet deployed (Stage 6) or security-hardened (Stage 7). | Owner-facing Next.js dashboard + a one-webhook multi-agent n8n backend over Supabase. |
+| **Customer experience** | `apps/customer-app` + `n8n/` | ✅ **Built, deployed & hardened, Stages 1–7** (dashboard + Supabase schema/seed + n8n agentic backend + tests; live on its own Netlify site `handled-customer-app.netlify.app`; scoped Stage-7 review done — security headers, RLS re-assertion, logout). | Owner-facing Next.js dashboard + a one-webhook multi-agent n8n backend over Supabase. |
 | **Test harness** | `apps/<tbd>` (not created yet) | 🔲 Planned | Standalone app to impersonate customers over SMS-style chat and watch the AI respond. |
 
 Each app is built independently through the stage-gated workflow below, gets its own `apps/<app>/` folder and its own `docs/<App>/` spec tree, and must not assume the others exist. **`apps/website` and `apps/customer-app` (+ `n8n/`) exist today** — the sections below are per-app; the test harness is summarized under "Planned apps."
@@ -22,11 +22,12 @@ apps/
   customer-app/        Handled customer experience dashboard (Next.js 14). ALL its commands run from here.
   <test-harness>/      (future) Test harness — not created yet
 n8n/                   Customer-app agentic SMS backend: handled-agentic.json (importable workflow) + prompts/ (10 verbatim prompts) + README (deploy guide). See "n8n backend" below.
-scripts/               Builder-side utilities (OUTSIDE the apps): export-evals.ts/.sql — Azure AI Foundry eval export (direct DB pull, service-role).
+scripts/               Builder-side utilities (OUTSIDE the apps): export-evals.ts/.sql + eval-jsonl.ts (pure, unit-testable row builder) — Azure AI Foundry eval export (direct DB pull, service-role); build-cloud-workflow.js — n8n Cloud (Starter) inliner.
 supabase/
   migrations/0001_init.sql   Customer-app schema: 17 tables, RLS, triggers, realtime. Run first.
   seed/                      Acme Plumbing demo data, numbered 01–06 — run IN ORDER after the migration (see seed/README.md).
   rls-policies.sql           Website Stage 7 RLS (run manually in Supabase SQL Editor — not auto-applied).
+  customer-app-rls.sql       Customer-app Stage 7 RLS re-assertion (FORCE RLS + anon revoke + org policies; run manually, after the migration + seed).
 docs/
   PRD.md               Product requirements (all apps)   ·   design.md  Brand design system (tokens)
   Competitive Research.md · evals.xlsx   Supporting research / eval insights
@@ -40,7 +41,7 @@ dev-os/                The stage-gated build workflow "operating system" (see de
 netlify.toml           REPO-ROOT deploy config targets apps/website (base = apps/website, Next runtime). apps/customer-app has its OWN netlify.toml (base = apps/customer-app) for a SEPARATE Netlify site.
 ```
 
-> **Monorepo gotcha:** `supabase/` holds files for *both* apps — the `migrations/` + `seed/` trees are the **customer-app** schema/data; `rls-policies.sql` is the **website** Stage-7 review. Likewise the repo-root `netlify.toml` is the website's; the customer-app's is `apps/customer-app/netlify.toml`. Don't cross them.
+> **Monorepo gotcha:** `supabase/` holds files for *both* apps — the `migrations/` + `seed/` trees are the **customer-app** schema/data; `rls-policies.sql` is the **website** Stage-7 review while `customer-app-rls.sql` is the **customer-app's**. Likewise the repo-root `netlify.toml` is the website's; the customer-app's is `apps/customer-app/netlify.toml`. Don't cross them.
 
 ---
 
@@ -89,7 +90,7 @@ Deploys currently go through the **Netlify MCP connector** as direct zip-upload 
 
 ## Customer-app (`apps/customer-app` + `n8n/`)
 
-The Handled customer experience: an owner-facing **Next.js 14 (App Router), TypeScript strict** dashboard (`apps/customer-app`) over a **Supabase** database, plus a **multi-agent n8n workflow** (`n8n/`) that is the single AI entry point for inbound end-customer texts. Built through Stage 4 (features). Specs: `docs/customer-app/engineering/engineering-doc.md` + `docs/customer-app/implementation/*.md`.
+The Handled customer experience: an owner-facing **Next.js 14 (App Router), TypeScript strict** dashboard (`apps/customer-app`) over a **Supabase** database, plus a **multi-agent n8n workflow** (`n8n/`) that is the single AI entry point for inbound end-customer texts. Built through Stage 7: features + tests, **deployed** to its own Netlify site (`handled-customer-app.netlify.app`, separate from the website), and **security-hardened** (scoped Stage-7 review — see `docs/customer-app/security/security-plan.md` + `supabase/customer-app-rls.sql`). Specs: `docs/customer-app/engineering/engineering-doc.md` + `docs/customer-app/implementation/*.md` (test plan: `testing.md`).
 
 ### Commands (run from `apps/customer-app/`)
 
@@ -117,6 +118,10 @@ Same single-test invocation as the website (`npm run test -- <file>`). Node **20
 
 **Supabase schema.** `supabase/migrations/0001_init.sql` creates 17 tables with RLS, triggers, and realtime. Seed with `supabase/seed/01…06_*.sql` **in numeric order, after** the migration (`seed/README.md`). The seed deliberately does **not** insert the owner `dashboard_users` row (it FKs `auth.users`) — dashboard login is set up manually. Schema is mirrored in `docs/customer-app/implementation/supabase-schema.sql`.
 
+### Deploying the customer-app
+
+Live at `handled-customer-app.netlify.app` on its **own Netlify site** (`handled-customer-app`), separate from the website's site. Deploys go through the **Netlify MCP connector** (same zip-upload flow as the website — there's no Git↔Netlify auto-deploy, and the connector doesn't fully honor `.gitignore`, so strip `node_modules`/`.next` before upload). The deploy config is `apps/customer-app/netlify.toml` (`base = apps/customer-app`, `@netlify/plugin-nextjs`, Node 20) — **not** the repo-root `netlify.toml`, which is the website's. The `.netlify/` link state and the generated edge-bundle are gitignored. Setting the dashboard's Supabase auth env (`NEXT_PUBLIC_SUPABASE_URL` / `_ANON_KEY`, service role) switches it out of read-only demo mode.
+
 ### n8n backend (`n8n/`) — deploying now
 
 One importable workflow, `n8n/handled-agentic.json` (52 nodes), is the **single agentic webhook**: `POST /webhook/handled/message` runs **Validate/Auth → Context Loader → spam/injection Guard (Haiku) → intent Router (Haiku) → one of 6 specialist agents (shared Sonnet node) → 20 org-scoped Supabase REST tools → Persist+Eval**, and always returns a fixed JSON envelope (even failures return `200` with an `intent:"fallback"` reply — never a 500). The request/response contract is fixed in `docs/customer-app/implementation/n8n-webhook-contract.md`; tools and the tool→agent matrix in `n8n-tools.md`; prompts in `n8n-agent-prompts.md`.
@@ -128,9 +133,10 @@ One importable workflow, `n8n/handled-agentic.json` (52 nodes), is the **single 
 - **Prompt structure:** every prompt is an XML-tag template in the fixed order `<Role>` · `<Instruction>` · `<Context>` · `<Examples>` · `<Task>` · `<OutputFormat>` · `<Guardrails>` (omit an empty tag). `shared-preamble.md` is the **single source of truth** for the four blocks embedded *identically* into all 6 specialists — base `<Role>`, `<Context>`, `<OutputFormat>`, and the 8-rule `<Guardrails>`; each specialist adds only its own role line, `<Instruction>`, `<Task>` (numbered, with inline `(eval …)` IDs), and `Tools for this agent:`. `guard.md`/`router.md` are classifier-only and don't use the shared blocks. So edit a shared block in `shared-preamble.md` first, then re-sync all 6 specialist files **and** the JSON.
 - Env for the dashboard side (and the whole system) is documented once in `apps/customer-app/.env.example`, annotated per consumer (dashboard / n8n / eval).
 
-### Eval export (builder-side, not a dashboard feature)
+### Evals — two separate halves
 
-`scripts/export-evals.ts` pulls scored assistant turns and writes an Azure AI Foundry JSONL (`{question,response,citation,reasoning}` per row) + an `eval_exports` audit row. It runs **outside** the app (service-role, direct DB pull) — there is deliberately no dashboard Evals page or `/api/evals/export` route. See `scripts/README.md` and `docs/customer-app/implementation/eval-pipeline.md`.
+1. **Builder-side export** (`scripts/`): `export-evals.ts` pulls scored assistant turns and writes an Azure AI Foundry JSONL (`{question,response,citation,reasoning}` per row) + an `eval_exports` audit row. It delegates the pure DB-rows→JSONL transform to `eval-jsonl.ts` (unit-tested without a DB). Runs **outside** the app (service-role, direct DB pull) — there is deliberately no dashboard Evals page or `/api/evals/export` route. See `scripts/README.md` and `docs/customer-app/implementation/eval-pipeline.md`.
+2. **Graded launch-gate loop** (`apps/customer-app/tests/eval/`): the 50 `evals.xlsx` cases (committed as `eval-cases.json`) run through the live agent via `run-eval.ts` (a standalone `tsx` script — **not** a `*.test.ts`, so `npm run test` skips it), scored by the pure `score.ts` (which *is* unit-tested in `tests/unit/eval-scoring.test.ts`). It enforces the gates **any Critical failure blocks launch; emergency recall must = 100%**. It has **not** been run here (no reachable n8n/Anthropic) — run it at Stage 6 against the deployed webhook. See `tests/eval/README.md`.
 
 ---
 
@@ -142,7 +148,7 @@ Build these only when asked, via the full stage-gated workflow, writing specs to
 - Impersonate multiple users, view each one's chat history, send messages as them, and see the AI's response.
 - Mimics **SMS** (looks like texting Acme Plumbing). Loads the same ~30 backfilled customers.
 
-**Evaluations** — text inputs only (not phone). Conversation history saved in Supabase is uploaded to **Azure AI Foundry** and scored with Azure's evaluator schema (record shape `question`/`response`/`citation`/`reasoning`). The export half is already built — see "Eval export" under Customer-app.
+**Evaluations** — text inputs only (not phone). Conversation history saved in Supabase is uploaded to **Azure AI Foundry** and scored with Azure's evaluator schema (record shape `question`/`response`/`citation`/`reasoning`). Both halves are already built (the Azure export **and** the offline graded launch-gate loop) — see "Evals — two separate halves" under Customer-app.
 
 ---
 

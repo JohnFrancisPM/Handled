@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { NotificationBell } from "@/components/dashboard/NotificationBell";
 import { SidebarToggle } from "@/components/layout/SidebarToggle";
+import { SignOutButton } from "@/components/layout/SignOutButton";
 import { isDemoMode } from "@/lib/env";
 import { DEMO_ORG, DEMO_USER_EMAIL } from "@/lib/demo/fixtures";
 
@@ -36,6 +37,7 @@ export function TopBar() {
           <Avatar name={DEMO_USER_EMAIL} size="sm" tone="brand" />
           <span className="hidden type-body-sm text-grey-500 lg:inline">{DEMO_USER_EMAIL}</span>
         </div>
+        {!demo && <SignOutButton />}
       </div>
     </header>
   );

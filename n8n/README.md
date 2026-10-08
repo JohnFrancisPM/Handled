@@ -171,10 +171,20 @@ Webhook → Validate & Auth → [invalid → Respond 4xx]
 
 ### Prompts in nodes
 
-The specialist agents embed **shared-preamble + their role block** as the system message; the Guard and
-Router prompts are embedded verbatim in the `Build Guard Request` / `Build Router Request` nodes. The
-`prompts/` folder holds the same text as standalone files for editing/review. If you change a prompt
-file, re-embed it (or re-run the generator) so the node and the file stay in sync.
+All prompts use a consistent **XML-tag format** — `<Role> <Instruction> <Context> <Examples> <Task>
+<OutputFormat> <Guardrails>`, in that order, omitting any tag with no content — and several carry
+curated few-shot `<Examples>`.
+
+Each of the 6 specialist prompt files is a **complete, self-contained XML document**: the shared blocks
+(`<Role>`-base, `<Context>`, `<OutputFormat>`, `<Guardrails>`) merged verbatim with that specialist's own
+role line, `<Instruction>`, `<Examples>`, `<Task>`, and tool list. That full document is embedded as the
+agent node's `systemMessage`. The Guard and Router prompts are their own self-contained XML docs embedded
+verbatim as the `SYSTEM` string in the `Build Guard Request` / `Build Router Request` nodes.
+
+`prompts/shared-preamble.md` is the **canonical source** of the shared blocks — edit them there first,
+then re-sync every specialist file. The `prompts/` folder holds the same text as standalone files for
+editing/review. If you change a prompt file, re-embed it (or re-run the generator) so the node and the
+file stay in sync.
 
 ---
 

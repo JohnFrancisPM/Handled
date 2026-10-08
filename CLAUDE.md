@@ -84,7 +84,18 @@ Node **20 LTS** (pinned for Netlify in `netlify.toml`). The `@/` import alias ma
 
 ### Deploying the website
 
-Deploys currently go through the **Netlify MCP connector** as direct zip-upload builds (there is **no Git↔Netlify connection**, so pushing to `main` does not auto-deploy). The connector's upload does not fully respect `.gitignore`, so **remove `node_modules`/`.next` before an upload** or it will 413. The repo-root `netlify.toml` sets `base = apps/website`, `publish = ".next"` (required — a stale UI publish value otherwise equals the base dir and breaks `@netlify/plugin-nextjs`), `npm run build`, and Node 20. Full handoff (incl. the Git-CD alternative): `docs/website/deployment/netlify-deploy.md`. Optional server-only env vars `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` enable real lead storage; without them the form no-ops.
+There is **no Git↔Netlify connection**, so pushing to `main` does not auto-deploy. The repo root is linked to the `handled-website-ajik` Netlify site; the repo-root `netlify.toml` sets `base = apps/website`, `publish = ".next"`, `npm run build`, and Node 20.
+
+**Deploy with the local Netlify CLI — run it from `apps/website`, NOT the repo root:**
+
+```bash
+cd apps/website
+npx netlify-cli deploy --build --prod
+```
+
+Run from the repo root the CLI resolves `publish = ".next"` relative to the repo root (`/Handled/.next`) instead of under `base`, and the `@netlify/plugin-nextjs` step fails with *"publish directory was not found"*. Run from `apps/website`, `publish` resolves to `apps/website/.next` and it works. (`publish = ".next"` must stay in the toml — a stale UI publish value otherwise equals the base dir and breaks the plugin; it resolves correctly for Netlify's own cloud build.)
+
+The **Netlify MCP connector** (`deploy-site`) is an alternative — a full-repo upload + cloud build, which resolves `base`/`publish` correctly for the website (unlike the customer-app) — but its upload does not fully respect `.gitignore`, so remove `node_modules`/`.next` first or it 413s. Full handoff (incl. the Git-CD alternative): `docs/website/deployment/netlify-deploy.md`. Optional server-only env vars `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` enable real lead storage; without them the form no-ops.
 
 ---
 

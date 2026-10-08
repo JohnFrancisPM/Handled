@@ -12,10 +12,11 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorCard } from "@/components/ui/ErrorCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { IntentBadge } from "@/components/dashboard/IntentBadge";
 import { ThreadView } from "@/components/inbox/ThreadView";
-import { formatRelative } from "@/lib/utils/format";
+import { formatRelative, isRecent } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 import type { ConversationListItem } from "@/lib/types";
 
@@ -133,6 +134,7 @@ export function InboxView({ selectedId }: { selectedId: string | null }) {
           <ul>
             {items.map((c) => {
               const active = c.id === selectedId;
+              const recent = isRecent(c.updated_at);
               return (
                 <li key={c.id}>
                   <Link
@@ -142,7 +144,9 @@ export function InboxView({ selectedId }: { selectedId: string | null }) {
                       "flex gap-3 border-b border-grey-50 border-l-2 px-4 py-3 transition-colors duration-[var(--motion-fast)] ease-ds-out",
                       active
                         ? "border-l-brand bg-brand-50"
-                        : "border-l-transparent hover:bg-grey-25"
+                        : recent
+                          ? "border-l-green-500 hover:bg-grey-25"
+                          : "border-l-transparent hover:bg-grey-25"
                     )}
                   >
                     <Avatar name={c.customer.name} size="md" />
@@ -151,12 +155,18 @@ export function InboxView({ selectedId }: { selectedId: string | null }) {
                         <span className="truncate type-body-lg font-medium text-grey-900">
                           {c.customer.name}
                         </span>
-                        <span className="shrink-0 type-body-sm text-grey-400">
+                        <span
+                          className={cn(
+                            "shrink-0 type-body-sm",
+                            recent ? "font-medium text-green-700" : "text-grey-400"
+                          )}
+                        >
                           {formatRelative(c.updated_at)}
                         </span>
                       </div>
                       <span className="truncate type-body-sm text-grey-500">{c.customer.phone}</span>
                       <div className="mt-1 flex flex-wrap items-center gap-2">
+                        {recent && <Badge tone="green">New</Badge>}
                         <IntentBadge intent={c.last_intent} />
                         <StatusBadge status={c.status} />
                       </div>

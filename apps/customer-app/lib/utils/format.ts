@@ -49,6 +49,14 @@ export function formatRelative(iso: string | null | undefined): string {
   return `${days}d ago`;
 }
 
+/** True when `iso` is within the last `withinMinutes` (default 15) — drives the "New" cue. */
+export function isRecent(iso: string | null | undefined, withinMinutes = 15): boolean {
+  if (!iso) return false;
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return false;
+  return Date.now() - then < withinMinutes * 60000;
+}
+
 export function humanize(value: string | null | undefined): string {
   if (!value) return "—";
   return value

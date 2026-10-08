@@ -267,10 +267,6 @@
         "headerParameters": {
           "parameters": [
             {
-              "name": "x-api-key",
-              "value": "={{ $env.ANTHROPIC_API_KEY }}"
-            },
-            {
               "name": "anthropic-version",
               "value": "2023-06-01"
             },
@@ -283,7 +279,9 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.anthropicBody) }}",
-        "options": {}
+        "options": {},
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi"
       },
       "id": "node_011",
       "name": "Guard LLM (Haiku)",
@@ -293,11 +291,17 @@
         -360,
         380
       ],
-      "onError": "continueErrorOutput"
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "anthropicApi": {
+          "id": "ANTHROPIC_CRED",
+          "name": "Anthropic account"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "// Parse Guard output\nlet out = {};\ntry { out = JSON.parse(($json.content && $json.content[0] && $json.content[0].text) || '{}'); } catch(e) { out = { spam:false, injection:false }; }\nconst decision = out.spam ? 'spam' : (out.injection ? 'injection' : 'legitimate');\nreturn [{ json: { ...$('Build Guard Request').item.json, guard: out, _decision: decision } }];"
+        "jsCode": "// Parse Guard output\nconst extractJson=(t)=>{ t=String(t||''); const a=t.indexOf('{'), b=t.lastIndexOf('}'); return (a>=0&&b>a)?JSON.parse(t.slice(a,b+1)):JSON.parse(t); };\nlet out = {};\ntry { out = extractJson(($json.content && $json.content[0] && $json.content[0].text) || '{}'); } catch(e) { out = { spam:false, injection:false }; }\nconst decision = out.spam ? 'spam' : (out.injection ? 'injection' : 'legitimate');\nreturn [{ json: { ...$('Build Guard Request').item.json, guard: out, _decision: decision } }];"
       },
       "id": "node_012",
       "name": "Parse Guard",
@@ -470,10 +474,6 @@
         "headerParameters": {
           "parameters": [
             {
-              "name": "x-api-key",
-              "value": "={{ $env.ANTHROPIC_API_KEY }}"
-            },
-            {
               "name": "anthropic-version",
               "value": "2023-06-01"
             },
@@ -486,7 +486,9 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.anthropicBody) }}",
-        "options": {}
+        "options": {},
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi"
       },
       "id": "node_019",
       "name": "Router LLM (Haiku)",
@@ -496,11 +498,17 @@
         440,
         380
       ],
-      "onError": "continueErrorOutput"
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "anthropicApi": {
+          "id": "ANTHROPIC_CRED",
+          "name": "Anthropic account"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "// Parse Router output; set language_hint\nlet out={};\ntry { out = JSON.parse(($json.content && $json.content[0] && $json.content[0].text)||'{}'); } catch(e){ out={ intent:'faq', multi:false, language:'en' }; }\nconst base = $('Build Router Request').item.json;\nconst cb = { ...base.contextBundle, language_hint: out.language || 'en' };\nreturn [{ json: { ...base, contextBundle: cb, router: out, _intent: out.intent || 'faq' } }];"
+        "jsCode": "// Parse Router output; set language_hint\nconst extractJson=(t)=>{ t=String(t||''); const a=t.indexOf('{'), b=t.lastIndexOf('}'); return (a>=0&&b>a)?JSON.parse(t.slice(a,b+1)):JSON.parse(t); };\nlet out={};\ntry { out = extractJson(($json.content && $json.content[0] && $json.content[0].text)||'{}'); } catch(e){ out={ intent:'faq', multi:false, language:'en' }; }\nconst base = $('Build Router Request').item.json;\nconst cb = { ...base.contextBundle, language_hint: out.language || 'en' };\nreturn [{ json: { ...base, contextBundle: cb, router: out, _intent: out.intent || 'faq' } }];"
       },
       "id": "node_020",
       "name": "Parse Router",
@@ -800,7 +808,11 @@
     },
     {
       "parameters": {
-        "model": "={{ $env.ANTHROPIC_MODEL_SPECIALIST }}",
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.ANTHROPIC_MODEL_SPECIALIST }}"
+        },
         "options": {
           "temperature": 0.3,
           "maxTokensToSample": 1024
@@ -1143,7 +1155,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Persist + Eval-extractor (n8n-workflow.md §8)\nconst SB=$env.SUPABASE_URL+'/rest/v1/';\nconst HW={ apikey:$env.SUPABASE_SERVICE_ROLE_KEY, Authorization:'Bearer '+$env.SUPABASE_SERVICE_ROLE_KEY, 'Content-Type':'application/json', Prefer:'return=representation' };\nconst post=(p,b)=>this.helpers.httpRequest({method:'POST',url:SB+p,headers:HW,body:b,json:true});\nconst patch=(p,b)=>this.helpers.httpRequest({method:'PATCH',url:SB+p,headers:{...HW},body:b,json:true});\nconst ctx=$('Context Loader').first().json.contextBundle;\nconst intent=$('Parse Router').first().json._intent;\n\n// AI Agent output text -> parsed JSON envelope\nlet out={};\nconst raw=$json.output!==undefined?$json.output:$json.text;\ntry { out=typeof raw==='string'?JSON.parse(raw):raw; } catch(e){ out={ reply:String(raw||''), actions:[], eval:{} }; }\nconst ev=out.eval||{};\nconst agentName=out.agent||intent;\n\n// which specialist handled it (from node) — map intent->agent label\nconst agentLabel={ book:'new_booking', reschedule:'reschedule_cancel', cancel:'reschedule_cancel', emergency:'emergency_triage', pricing:'pricing_quote', out_of_area:'out_of_area', faq:'general_faq' }[intent]||'general_faq';\n\n// user turn\nawait post('messages',{ org_id:ctx.org_id, conversation_id:ctx.conversation_id, role:'user', content:ctx.message_text, question:ctx.message_text, intent, });\n// assistant turn with eval fields + tool_calls (incl external_message_id)\nconst am=await post('messages',{ org_id:ctx.org_id, conversation_id:ctx.conversation_id, role:'assistant', content:out.reply||'', question:ev.question||ctx.message_text, response:ev.response||out.reply||'', citation:ev.citation||null, reasoning:ev.reasoning||null, intent, agent:agentLabel, tool_calls:{ actions:out.actions||[], external_message_id:ctx.message_id } });\nconst arow=Array.isArray(am)?am[0]:am;\n\n// conversation status\nconst actions=out.actions||[];\nlet status='open';\nif(out.handoff==='emergency'||actions.some(x=>/escalate|log_emergency/.test(x.type||''))) status='escalated';\nelse if(actions.some(x=>x.type==='create_appointment')) status='booked';\nawait patch('conversations?id=eq.'+ctx.conversation_id,{ last_intent:intent, status });\n\nreturn [{ json: {\n  ok:true,\n  reply: out.reply||'',\n  intent,\n  agent: agentLabel,\n  actions,\n  conversation_id: ctx.conversation_id,\n  message_id: arow&&arow.id,\n  billed:true,\n  eval: { question: ev.question||ctx.message_text, response: ev.response||out.reply||'', citation: ev.citation||'', reasoning: ev.reasoning||'' },\n} }];"
+        "jsCode": "// Persist + Eval-extractor (n8n-workflow.md §8)\nconst extractJson=(t)=>{ t=String(t||''); const a=t.indexOf('{'), b=t.lastIndexOf('}'); return (a>=0&&b>a)?JSON.parse(t.slice(a,b+1)):JSON.parse(t); };\nconst SB=$env.SUPABASE_URL+'/rest/v1/';\nconst HW={ apikey:$env.SUPABASE_SERVICE_ROLE_KEY, Authorization:'Bearer '+$env.SUPABASE_SERVICE_ROLE_KEY, 'Content-Type':'application/json', Prefer:'return=representation' };\nconst post=(p,b)=>this.helpers.httpRequest({method:'POST',url:SB+p,headers:HW,body:b,json:true});\nconst patch=(p,b)=>this.helpers.httpRequest({method:'PATCH',url:SB+p,headers:{...HW},body:b,json:true});\nconst ctx=$('Context Loader').first().json.contextBundle;\nconst intent=$('Parse Router').first().json._intent;\n\n// AI Agent output text -> parsed JSON envelope\nlet out={};\nconst raw=$json.output!==undefined?$json.output:$json.text;\ntry { out=typeof raw==='string'?extractJson(raw):raw; } catch(e){ out={ reply:String(raw||''), actions:[], eval:{} }; }\nconst ev=out.eval||{};\nconst agentName=out.agent||intent;\n\n// which specialist handled it (from node) — map intent->agent label\nconst agentLabel={ book:'new_booking', reschedule:'reschedule_cancel', cancel:'reschedule_cancel', emergency:'emergency_triage', pricing:'pricing_quote', out_of_area:'out_of_area', faq:'general_faq' }[intent]||'general_faq';\n\n// user turn\nawait post('messages',{ org_id:ctx.org_id, conversation_id:ctx.conversation_id, role:'user', content:ctx.message_text, question:ctx.message_text, intent, });\n// assistant turn with eval fields + tool_calls (incl external_message_id)\nconst am=await post('messages',{ org_id:ctx.org_id, conversation_id:ctx.conversation_id, role:'assistant', content:out.reply||'', question:ev.question||ctx.message_text, response:ev.response||out.reply||'', citation:ev.citation||null, reasoning:ev.reasoning||null, intent, agent:agentLabel, tool_calls:{ actions:out.actions||[], external_message_id:ctx.message_id } });\nconst arow=Array.isArray(am)?am[0]:am;\n\n// conversation status\nconst actions=out.actions||[];\nlet status='open';\nif(out.handoff==='emergency'||actions.some(x=>/escalate|log_emergency/.test(x.type||''))) status='escalated';\nelse if(actions.some(x=>x.type==='create_appointment')) status='booked';\nawait patch('conversations?id=eq.'+ctx.conversation_id,{ last_intent:intent, status });\n\nreturn [{ json: {\n  ok:true,\n  reply: out.reply||'',\n  intent,\n  agent: agentLabel,\n  actions,\n  conversation_id: ctx.conversation_id,\n  message_id: arow&&arow.id,\n  billed:true,\n  eval: { question: ev.question||ctx.message_text, response: ev.response||out.reply||'', citation: ev.citation||'', reasoning: ev.reasoning||'' },\n} }];"
       },
       "id": "node_049",
       "name": "Persist + Eval",

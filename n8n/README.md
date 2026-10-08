@@ -31,10 +31,11 @@ n8n/
 
 1. In n8n: **Workflows → Import from File →** select `n8n/handled-agentic.json`.
 2. The workflow imports as **Handled — Agentic SMS Backend** (inactive).
-3. Open the **Claude Sonnet (Specialist)** node and select (or create) your **Anthropic** credential.
-   The import ships a placeholder credential reference (`Anthropic account`) — n8n will prompt you to
-   pick a real credential. The Guard and Router nodes call the Anthropic API over **HTTP Request** and
-   read the API key from an environment variable (no credential needed — see below).
+3. Select (or create) your **Anthropic** credential on the three model nodes — **Claude Sonnet
+   (Specialist)**, **Guard LLM (Haiku)**, and **Router LLM (Haiku)**. All three ship a placeholder
+   credential reference (`Anthropic account`); n8n prompts you to pick a real one. The Guard/Router
+   HTTP Request nodes authenticate with the same credential (`Predefined Credential Type → Anthropic`),
+   so there is **no `ANTHROPIC_API_KEY` env var** — one Anthropic credential covers all three.
 4. **Save**, then toggle **Active** to register the production webhook.
 
 ---
@@ -49,14 +50,20 @@ environment (e.g. `docker-compose` env, `.env`, or the host) so `{{ $env.* }}` r
 | `N8N_WEBHOOK_SECRET` | `Validate & Auth` | Shared secret; must equal the inbound `X-Handled-Secret` header. |
 | `SUPABASE_URL` | Context Loader, all tools, persistence | Supabase project URL (REST base is `${SUPABASE_URL}/rest/v1`). |
 | `SUPABASE_SERVICE_ROLE_KEY` | Context Loader, all tools, persistence | Service-role key (bypasses RLS; org scoping enforced in the tool layer). |
-| `ANTHROPIC_API_KEY` | Guard LLM, Router LLM (HTTP Request header `x-api-key`) | Claude API key. |
 | `ANTHROPIC_MODEL_GUARD` | Build Guard Request | Haiku-class model id, e.g. `claude-haiku-4-5`. |
 | `ANTHROPIC_MODEL_ROUTER` | Build Router Request | Haiku-class model id. |
-| `ANTHROPIC_MODEL_SPECIALIST` | Claude Sonnet (Specialist) | Sonnet-class model id, e.g. `claude-sonnet-4-5`. |
+| `ANTHROPIC_MODEL_SPECIALIST` | Claude Sonnet (Specialist) | **Dated** Sonnet-class id, e.g. `claude-sonnet-4-5-20250929` (the LangChain model node rejects the undated alias). |
 
-> The **Anthropic credential** on the `Claude Sonnet (Specialist)` LangChain model node is separate
-> from `ANTHROPIC_API_KEY` (which the Guard/Router HTTP nodes use). Point both at the same key.
-> `ANTHROPIC_API_KEY` must live in the n8n environment only — never in the browser/dashboard.
+> Claude auth is a **credential, not an env var.** All three model nodes (Specialist, Guard, Router)
+> use the n8n **Anthropic** credential you select on import — there is no `ANTHROPIC_API_KEY` to set.
+
+### n8n Cloud (Starter) — no `$env`
+
+n8n Cloud blocks custom `$env` variables and gates Variables (`$vars`) to Pro+. For a Starter instance,
+inline the values before importing with `scripts/build-cloud-workflow.js` (repo root) — it reads
+`N8N_WEBHOOK_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (and optional model ids) from your
+shell and writes an import-ready copy; secrets stay out of chat and git. You still pick the Anthropic
+credential on the three model nodes after import (step 3).
 
 The Supabase schema must already be created (run
 [`docs/customer-app/implementation/supabase-schema.sql`](../docs/customer-app/implementation/supabase-schema.sql))

@@ -7,14 +7,18 @@
  * file. Values never appear in chat or in git — you supply them in your own
  * shell when you run this.
  *
+ * All three Anthropic calls (Guard, Router, Specialist) authenticate with the
+ * n8n Anthropic CREDENTIAL you select on import — so there is no ANTHROPIC_API_KEY
+ * to inline here. Only Supabase + the webhook secret are inlined; model ids are
+ * optional overrides.
+ *
  * Usage (from repo root):
  *   N8N_WEBHOOK_SECRET='...' \
  *   SUPABASE_URL='https://xxxx.supabase.co' \
  *   SUPABASE_SERVICE_ROLE_KEY='...' \
- *   ANTHROPIC_API_KEY='sk-ant-...' \
- *   ANTHROPIC_MODEL_GUARD='claude-haiku-4-5' \
- *   ANTHROPIC_MODEL_ROUTER='claude-haiku-4-5' \
- *   ANTHROPIC_MODEL_SPECIALIST='claude-sonnet-4-5' \
+ *   [ANTHROPIC_MODEL_GUARD='claude-haiku-4-5'] \
+ *   [ANTHROPIC_MODEL_ROUTER='claude-haiku-4-5'] \
+ *   [ANTHROPIC_MODEL_SPECIALIST='claude-sonnet-4-5-20250929'] \
  *   node <path>/build-cloud-workflow.js <in.json> <out.json>
  */
 const fs = require("fs");
@@ -26,17 +30,18 @@ if (!IN || !OUT) {
   process.exit(2);
 }
 
-// Non-secret model ids get sensible defaults; the 4 real inputs are required.
+// Non-secret model ids get sensible defaults; the 3 real inputs are required.
+// Note: the specialist (LangChain lmChatAnthropic) node needs a DATED model id;
+// the undated alias is rejected there, so the default is the dated form.
 const DEFAULTS = {
   ANTHROPIC_MODEL_GUARD: "claude-haiku-4-5",
   ANTHROPIC_MODEL_ROUTER: "claude-haiku-4-5",
-  ANTHROPIC_MODEL_SPECIALIST: "claude-sonnet-4-5"
+  ANTHROPIC_MODEL_SPECIALIST: "claude-sonnet-4-5-20250929"
 };
 const VARS = [
   "N8N_WEBHOOK_SECRET",
   "SUPABASE_URL",
   "SUPABASE_SERVICE_ROLE_KEY",
-  "ANTHROPIC_API_KEY",
   "ANTHROPIC_MODEL_GUARD",
   "ANTHROPIC_MODEL_ROUTER",
   "ANTHROPIC_MODEL_SPECIALIST"

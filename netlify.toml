@@ -7,14 +7,20 @@
   # Build runs with this as the working directory.
   base = "apps/website"
   command = "npm run build"
+  # Next.js build output. Relative to `base`, so this resolves to apps/website/.next.
+  # Required because the site's UI build settings set publish = base (apps/website),
+  # which makes @netlify/plugin-nextjs fail ("publish dir cannot equal base dir").
+  # Setting it here (publishOrigin: config) overrides that stale UI value.
+  publish = ".next"
 
 [build.environment]
   # Pin Node to the version the app was built/tested against (spec: Node 20 LTS).
   NODE_VERSION = "20"
 
 # Next.js on Netlify.
-# The Next Runtime renders the 9 App Router pages as static assets and turns the
+# The Next Runtime renders the App Router pages as static assets and turns the
 # /api/leads Route Handler (export const runtime = "nodejs") into a Netlify
-# Function automatically. Do NOT set `publish` manually — the runtime manages it.
+# Function automatically. `publish` is set above to the .next output (not the
+# project root) because a stale UI publish value would otherwise break the plugin.
 [[plugins]]
   package = "@netlify/plugin-nextjs"

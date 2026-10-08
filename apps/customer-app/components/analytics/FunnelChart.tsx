@@ -35,21 +35,28 @@ export function FunnelChart({
   return (
     <div className="h-64 w-full" role="img" aria-label={`Funnel: ${inbound} inbound, ${booked} booked, ${closedWon} closed won`}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} layout="vertical" margin={{ left: 12, right: 24, top: 8, bottom: 8 }}>
-          <XAxis type="number" stroke={palette.axis} tick={{ fill: palette.axis, fontSize: 12 }} allowDecimals={false} />
+        <BarChart data={data} layout="vertical" margin={{ left: 8, right: 32, top: 8, bottom: 8 }}>
+          <XAxis
+            type="number"
+            stroke={palette.grid}
+            tick={{ fill: palette.axis, fontSize: 12 }}
+            tickLine={false}
+            allowDecimals={false}
+          />
           <YAxis
             type="category"
             dataKey="stage"
-            width={90}
-            stroke={palette.axis}
+            width={96}
+            stroke={palette.grid}
+            tickLine={false}
             tick={{ fill: palette.axis, fontSize: 12 }}
           />
           <Tooltip
             cursor={{ fill: palette.grid, opacity: 0.3 }}
             contentStyle={{ borderRadius: 8, border: `1px solid ${palette.grid}`, fontSize: 12 }}
           />
-          <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={36}>
-            <LabelList dataKey="value" position="right" fill={palette.axis} fontSize={12} />
+          <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={40}>
+            <LabelList dataKey="value" position="right" fill={palette.axis} fontSize={12} fontWeight={600} />
             {data.map((d) => (
               <Cell key={d.stage} fill={d.fill} />
             ))}

@@ -2,16 +2,17 @@
 
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { z } from "zod";
 import { PricingPanelSchema } from "@/lib/schemas";
 import { useProfileBundle, usePanelSave } from "@/components/profile/panel-utils";
 import { ProfileFormFrame } from "@/components/profile/ProfileFormFrame";
 import { PanelSkeleton } from "@/components/profile/PanelSkeleton";
+import { FormField } from "@/components/profile/FormField";
+import { RowCard } from "@/components/profile/RowCard";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { ErrorCard } from "@/components/ui/ErrorCard";
 import type { Service } from "@/lib/types";
 
@@ -58,52 +59,52 @@ function PricingForm({ services, defaults }: { services: Service[]; defaults: Fo
       isDemo={isDemo}
     >
       <div className="flex flex-col gap-3">
-        {fields.length === 0 && <p className="type-body-sm text-grey-500">No pricing rows yet.</p>}
+        {fields.length === 0 && <p className="type-body-sm text-grey-500">No pricing rows yet — add one below.</p>}
         {fields.map((f, i) => (
-          <Card key={f.id} elevated className="flex flex-col gap-3">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Select {...register(`pricing.${i}.service_id`)} aria-label="Service">
-                {services.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </Select>
-              <Select {...register(`pricing.${i}.unit`)} aria-label="Unit">
-                <option value="flat">Flat</option>
-                <option value="hourly">Hourly</option>
-                <option value="starting_at">Starting at</option>
-              </Select>
-              <Input
-                type="number"
-                placeholder="Min price"
-                aria-label="Minimum price"
-                {...register(`pricing.${i}.price_min`)}
-              />
-              <Input
-                type="number"
-                placeholder="Max price"
-                aria-label="Maximum price"
-                invalid={!!errors.pricing?.[i]?.price_max}
-                {...register(`pricing.${i}.price_max`)}
-              />
-              <Input
-                placeholder="Notes"
-                className="sm:col-span-2"
-                {...register(`pricing.${i}.notes`)}
-              />
+          <RowCard key={f.id} title={`Pricing ${i + 1}`} onRemove={() => remove(i)} removeLabel="Remove pricing row">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <FormField label="Service" htmlFor={`pricing-${i}-service`}>
+                <Select id={`pricing-${i}-service`} {...register(`pricing.${i}.service_id`)}>
+                  {services.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </Select>
+              </FormField>
+              <FormField label="Unit" htmlFor={`pricing-${i}-unit`}>
+                <Select id={`pricing-${i}-unit`} {...register(`pricing.${i}.unit`)}>
+                  <option value="flat">Flat</option>
+                  <option value="hourly">Hourly</option>
+                  <option value="starting_at">Starting at</option>
+                </Select>
+              </FormField>
+              <FormField label="Minimum price" htmlFor={`pricing-${i}-min`} hint="In USD.">
+                <Input
+                  id={`pricing-${i}-min`}
+                  type="number"
+                  placeholder="150"
+                  {...register(`pricing.${i}.price_min`)}
+                />
+              </FormField>
+              <FormField
+                label="Maximum price"
+                htmlFor={`pricing-${i}-max`}
+                error={errors.pricing?.[i]?.price_max?.message}
+              >
+                <Input
+                  id={`pricing-${i}-max`}
+                  type="number"
+                  placeholder="450"
+                  invalid={!!errors.pricing?.[i]?.price_max}
+                  {...register(`pricing.${i}.price_max`)}
+                />
+              </FormField>
+              <FormField label="Notes" htmlFor={`pricing-${i}-notes`} className="sm:col-span-2">
+                <Input id={`pricing-${i}-notes`} placeholder="e.g. final price depends on inspection" {...register(`pricing.${i}.notes`)} />
+              </FormField>
             </div>
-            {errors.pricing?.[i]?.price_max && (
-              <span className="type-body-sm text-red-700" role="alert">
-                {errors.pricing[i]?.price_max?.message}
-              </span>
-            )}
-            <div>
-              <Button variant="ghost" size="sm" onClick={() => remove(i)} aria-label="Remove pricing row">
-                <Trash2 size={16} /> Remove
-              </Button>
-            </div>
-          </Card>
+          </RowCard>
         ))}
       </div>
 

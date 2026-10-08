@@ -31,7 +31,7 @@ export function ProfileFormFrame({
 }) {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 border-b border-grey-100 pb-4">
         <h2 className="type-h5 text-grey-900">{title}</h2>
         {description && <p className="type-body-sm text-grey-500">{description}</p>}
       </div>
@@ -39,16 +39,18 @@ export function ProfileFormFrame({
       {isDemo && (
         <div
           role="note"
-          className="flex items-center gap-2 rounded-md border border-yellow-500 bg-yellow-50 px-4 py-3 type-body-sm text-yellow-800"
+          className="flex items-start gap-2 rounded-md border border-yellow-500 bg-yellow-50 px-4 py-3 type-body-sm text-yellow-800"
         >
-          <Info aria-hidden="true" size={16} />
-          Demo mode — changes aren&apos;t saved. Connect Supabase to edit your live policy.
+          <Info aria-hidden="true" size={16} className="mt-[2px] shrink-0" />
+          <span>
+            Demo mode — changes aren&apos;t saved. Connect Supabase to edit your live policy.
+          </span>
         </div>
       )}
 
-      {children}
+      <div className="flex flex-col gap-6">{children}</div>
 
-      <div className="flex items-center gap-3 border-t border-grey-100 pt-4">
+      <div className="flex flex-wrap items-center gap-3 border-t border-grey-100 pt-4">
         <Button type="submit" disabled={saving}>
           {saving ? "Saving…" : "Save changes"}
         </Button>

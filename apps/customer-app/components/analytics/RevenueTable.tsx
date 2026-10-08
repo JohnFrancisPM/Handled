@@ -26,7 +26,7 @@ export function RevenueTable({ jobs }: { jobs: AppointmentListItem[] }) {
       <table className="w-full border-collapse text-left">
         <caption className="sr-only">Revenue by closed-won job</caption>
         <thead>
-          <tr className="border-b border-grey-100">
+          <tr className="border-b border-grey-100 bg-grey-25">
             <th scope="col" className="px-4 py-3 type-body-sm font-medium text-grey-500">
               Service
             </th>
@@ -43,11 +43,14 @@ export function RevenueTable({ jobs }: { jobs: AppointmentListItem[] }) {
         </thead>
         <tbody>
           {jobs.map((j) => (
-            <tr key={j.id} className="border-b border-grey-50 last:border-0 hover:bg-grey-25">
-              <td className="px-4 py-3 type-body-sm text-grey-900">{j.service ?? "—"}</td>
-              <td className="px-4 py-3 type-body-sm text-grey-700">{j.tech ?? "—"}</td>
-              <td className="px-4 py-3 type-body-sm text-grey-700">{formatDate(j.scheduled_at)}</td>
-              <td className="px-4 py-3 text-right type-body-sm text-grey-900">
+            <tr
+              key={j.id}
+              className="border-b border-grey-50 transition-colors duration-[var(--motion-fast)] ease-ds-out last:border-0 hover:bg-grey-25"
+            >
+              <td className="px-4 py-3 type-body-sm font-medium text-grey-900">{j.service ?? "—"}</td>
+              <td className="whitespace-nowrap px-4 py-3 type-body-sm text-grey-700">{j.tech ?? "—"}</td>
+              <td className="whitespace-nowrap px-4 py-3 type-body-sm text-grey-700">{formatDate(j.scheduled_at)}</td>
+              <td className="whitespace-nowrap px-4 py-3 text-right type-body-sm font-medium tabular-nums text-grey-900">
                 {formatCurrency(j.price)}
               </td>
             </tr>
@@ -55,10 +58,10 @@ export function RevenueTable({ jobs }: { jobs: AppointmentListItem[] }) {
         </tbody>
         <tfoot>
           <tr className="border-t border-grey-100 bg-grey-25">
-            <td className="px-4 py-3 type-body-lg text-grey-900" colSpan={3}>
+            <td className="px-4 py-3 type-body-lg font-medium text-grey-900" colSpan={3}>
               Total revenue
             </td>
-            <td className="px-4 py-3 text-right type-body-lg text-grey-900">
+            <td className="px-4 py-3 text-right type-body-lg font-medium tabular-nums text-grey-900">
               {formatCurrency(total)}
             </td>
           </tr>

@@ -2,15 +2,16 @@
 
 import { useForm, useFieldArray, type UseFormRegister } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { ServicesPanelSchema } from "@/lib/schemas";
 import type { z } from "zod";
 import { useProfileBundle, usePanelSave } from "@/components/profile/panel-utils";
 import { ProfileFormFrame } from "@/components/profile/ProfileFormFrame";
 import { PanelSkeleton } from "@/components/profile/PanelSkeleton";
+import { FormField } from "@/components/profile/FormField";
+import { RowCard } from "@/components/profile/RowCard";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { ErrorCard } from "@/components/ui/ErrorCard";
 
 type FormValues = z.infer<typeof ServicesPanelSchema>;
@@ -100,36 +101,42 @@ function ServiceGroup({
 }) {
   return (
     <section className="flex flex-col gap-3">
-      <h3 className="type-body-lg text-grey-700">{heading}</h3>
-      {indices.length === 0 && <p className="type-body-sm text-grey-500">None yet.</p>}
-      {indices.map((i) => (
-        <Card key={i} elevated className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
-            <Input placeholder="Service name" {...register(`services.${i}.name`)} />
-            <Input placeholder="Category" {...register(`services.${i}.category`)} />
-            <Input
-              placeholder="Notes (e.g. why it's not provided)"
+      <h3 className="type-body-lg font-medium text-grey-900">{heading}</h3>
+      {indices.length === 0 && (
+        <p className="type-body-sm text-grey-500">None yet — add one below.</p>
+      )}
+      {indices.map((i, pos) => (
+        <RowCard
+          key={i}
+          title={`${heading.replace(/s$/, "")} ${pos + 1}`}
+          onRemove={() => remove(i)}
+          removeLabel="Remove service"
+        >
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField label="Service name" htmlFor={`service-${i}-name`}>
+              <Input id={`service-${i}-name`} placeholder="e.g. Drain clearing" {...register(`services.${i}.name`)} />
+            </FormField>
+            <FormField label="Category" htmlFor={`service-${i}-category`}>
+              <Input id={`service-${i}-category`} placeholder="e.g. drain" {...register(`services.${i}.category`)} />
+            </FormField>
+            <FormField
+              label="Notes"
+              htmlFor={`service-${i}-notes`}
+              hint="Optional — e.g. why it's not provided."
               className="sm:col-span-2"
-              {...register(`services.${i}.notes`)}
-            />
-            <label className="flex items-center gap-2 type-body-sm text-grey-700">
-              <input
-                type="checkbox"
-                className="h-4 w-4 accent-[color:var(--brand)]"
-                {...register(`services.${i}.offered`)}
-              />
-              Offered to customers
-            </label>
+            >
+              <Input id={`service-${i}-notes`} {...register(`services.${i}.notes`)} />
+            </FormField>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => remove(i)}
-            aria-label="Remove service"
-          >
-            <Trash2 size={16} />
-          </Button>
-        </Card>
+          <label className="flex items-center gap-2 type-body-sm text-grey-700">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-[color:var(--brand)]"
+              {...register(`services.${i}.offered`)}
+            />
+            Offered to customers
+          </label>
+        </RowCard>
       ))}
     </section>
   );

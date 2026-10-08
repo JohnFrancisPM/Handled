@@ -40,26 +40,8 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-
-/** One scored AI turn as read from `messages`. */
-interface AssistantTurn {
-  question: string | null;
-  response: string | null;
-  citation: string | null;
-  reasoning: string | null;
-  intent: string | null;
-  created_at: string;
-}
-
-/** One output row in the Azure AI Foundry JSONL dataset. */
-interface EvalRow {
-  question: string;
-  response: string;
-  citation: string;
-  reasoning: string;
-  ground_truth?: string;
-  category: string;
-}
+// Pure, DB-free JSONL builder (unit-tested in apps/customer-app/tests/unit).
+import { buildEvalRows, serializeEvalJsonl, type AssistantTurn } from './eval-jsonl';
 
 function requireEnv(name: string): string {
   const v = process.env[name];
@@ -131,24 +113,9 @@ async function main(): Promise<void> {
 
   const turns = (data ?? []) as AssistantTurn[];
 
-  const rows: EvalRow[] = turns
-    // Only export fully-scored turns (a response must exist).
-    .filter((t) => t.response != null && t.response.trim() !== '')
-    .map((t) => {
-      const question = t.question ?? '';
-      const row: EvalRow = {
-        question,
-        response: t.response ?? '',
-        citation: t.citation ?? '',
-        reasoning: t.reasoning ?? '',
-        category: t.intent ?? 'unknown',
-      };
-      const gt = groundTruth[question];
-      if (gt) row.ground_truth = gt;
-      return row;
-    });
-
-  const jsonl = rows.map((r) => JSON.stringify(r)).join('\n') + (rows.length ? '\n' : '');
+  // Pure transform (shared with the unit tests): rows + JSONL serialization.
+  const rows = buildEvalRows(turns, groundTruth);
+  const jsonl = serializeEvalJsonl(rows);
 
   const slug = process.env.EVAL_ORG_SLUG ?? 'acme-plumbing';
   const stamp = new Date().toISOString().slice(0, 10);

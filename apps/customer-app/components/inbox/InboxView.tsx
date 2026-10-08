@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorCard } from "@/components/ui/ErrorCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Avatar } from "@/components/ui/Avatar";
 import { IntentBadge } from "@/components/dashboard/IntentBadge";
 import { ThreadView } from "@/components/inbox/ThreadView";
 import { formatRelative } from "@/lib/utils/format";
@@ -74,7 +75,10 @@ export function InboxView({ selectedId }: { selectedId: string | null }) {
           selectedId && "hidden lg:flex"
         )}
       >
-        <div className="flex items-center gap-2 border-b border-grey-100 p-3">
+        <div className="flex items-center justify-between gap-2 border-b border-grey-100 p-3">
+          <span className="type-body-sm font-medium text-grey-500">
+            {items.length} {items.length === 1 ? "conversation" : "conversations"}
+          </span>
           <label htmlFor="inbox-status" className="sr-only">
             Filter by status
           </label>
@@ -82,6 +86,7 @@ export function InboxView({ selectedId }: { selectedId: string | null }) {
             id="inbox-status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-40"
           >
             {STATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -93,9 +98,15 @@ export function InboxView({ selectedId }: { selectedId: string | null }) {
 
         <div className="flex-1 overflow-y-auto">
           {isLoading && (
-            <div className="flex flex-col gap-2 p-3">
+            <div className="flex flex-col gap-3 p-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
+                <div key={i} className="flex items-center gap-3">
+                  <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
+                  <div className="flex flex-1 flex-col gap-2">
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-3 w-3/4" />
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -128,20 +139,27 @@ export function InboxView({ selectedId }: { selectedId: string | null }) {
                     href={`/inbox/${c.id}`}
                     aria-current={active ? "true" : undefined}
                     className={cn(
-                      "flex flex-col gap-1 border-b border-grey-50 px-4 py-3 transition-colors duration-[var(--motion-fast)] ease-ds-out",
-                      active ? "bg-brand-50" : "hover:bg-grey-25"
+                      "flex gap-3 border-b border-grey-50 border-l-2 px-4 py-3 transition-colors duration-[var(--motion-fast)] ease-ds-out",
+                      active
+                        ? "border-l-brand bg-brand-50"
+                        : "border-l-transparent hover:bg-grey-25"
                     )}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate type-body-lg text-grey-900">{c.customer.name}</span>
-                      <span className="shrink-0 type-body-sm text-grey-300">
-                        {formatRelative(c.updated_at)}
-                      </span>
-                    </div>
-                    <span className="type-body-sm text-grey-500">{c.customer.phone}</span>
-                    <div className="mt-1 flex items-center gap-2">
-                      <IntentBadge intent={c.last_intent} />
-                      <StatusBadge status={c.status} />
+                    <Avatar name={c.customer.name} size="md" />
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="truncate type-body-lg font-medium text-grey-900">
+                          {c.customer.name}
+                        </span>
+                        <span className="shrink-0 type-body-sm text-grey-400">
+                          {formatRelative(c.updated_at)}
+                        </span>
+                      </div>
+                      <span className="truncate type-body-sm text-grey-500">{c.customer.phone}</span>
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <IntentBadge intent={c.last_intent} />
+                        <StatusBadge status={c.status} />
+                      </div>
                     </div>
                   </Link>
                 </li>

@@ -24,6 +24,9 @@ body {
 .type-body-lg { font-size: 16px; font-weight: 500; line-height: 24px; letter-spacing: 0; }
 .type-body-sm { font-size: 12px; font-weight: 400; line-height: 18px; letter-spacing: 0; }
 
+/* Modal/drawer scrim (token-backed; see --overlay in tokens.css). */
+.bg-overlay { background-color: var(--overlay); }
+
 /* Visible focus ring (a11y — design.md state table "Focus"). */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--focus-ring);

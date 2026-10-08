@@ -12,6 +12,11 @@ export default defineConfig({
     exclude: ["tests/e2e/**"]
   },
   resolve: {
-    alias: { "@": path.resolve(__dirname, ".") }
+    alias: {
+      "@": path.resolve(__dirname, "."),
+      // `server-only` is a build-time marker with no runtime behavior; stub it so
+      // server modules (data layer, analytics) can be unit-tested under node/jsdom.
+      "server-only": path.resolve(__dirname, "tests/stubs/empty.ts")
+    }
   }
 });

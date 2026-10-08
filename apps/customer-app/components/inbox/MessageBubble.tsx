@@ -28,7 +28,9 @@ export function MessageBubble({ message }: { message: ThreadMessage }) {
       <div
         className={cn(
           "max-w-[85%] rounded-lg border px-4 py-3 md:max-w-[70%]",
-          isAssistant ? "border-blue-100 bg-blue-50" : "border-grey-100 bg-grey-50"
+          isAssistant
+            ? "rounded-tr-sm border-blue-100 bg-blue-50"
+            : "rounded-tl-sm border-grey-100 bg-white"
         )}
       >
         {isAssistant && (message.intent || hasExplain) && (
@@ -40,10 +42,15 @@ export function MessageBubble({ message }: { message: ThreadMessage }) {
                 aria-expanded={showDetail}
                 aria-label={showDetail ? "Hide AI reasoning" : "Show AI reasoning"}
                 onClick={() => setShowDetail((v) => !v)}
-                className="flex items-center gap-1 rounded-sm p-1 text-grey-500 hover:bg-white hover:text-brand"
+                className={cn(
+                  "flex items-center gap-1 rounded-sm border px-2 py-[2px] type-body-sm transition-colors duration-[var(--motion-fast)] ease-ds-out",
+                  showDetail
+                    ? "border-brand-200 bg-white text-brand-700"
+                    : "border-transparent text-grey-500 hover:border-brand-200 hover:bg-white hover:text-brand-700"
+                )}
               >
-                <Info aria-hidden="true" size={15} />
-                <span className="type-body-sm">Why</span>
+                <Info aria-hidden="true" size={14} />
+                Why
               </button>
             )}
           </div>

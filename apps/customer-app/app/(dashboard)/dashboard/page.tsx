@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Avatar } from "@/components/ui/Avatar";
 import { IntentBadge } from "@/components/dashboard/IntentBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorCard } from "@/components/ui/ErrorCard";
@@ -92,15 +93,18 @@ export default async function DashboardOverviewPage() {
                 <li key={c.id}>
                   <Link
                     href={`/inbox/${c.id}`}
-                    className="flex items-center justify-between gap-3 py-3 hover:opacity-80"
+                    className="-mx-2 flex items-center justify-between gap-3 rounded-md px-2 py-3 transition-colors duration-[var(--motion-fast)] ease-ds-out hover:bg-grey-25"
                   >
-                    <div className="flex min-w-0 flex-col gap-1">
-                      <span className="type-body-lg text-grey-900">{c.customer.name}</span>
-                      <span className="type-body-sm text-grey-500">
-                        {formatRelative(c.updated_at)}
-                      </span>
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Avatar name={c.customer.name} size="sm" />
+                      <div className="flex min-w-0 flex-col gap-1">
+                        <span className="truncate type-body-lg font-medium text-grey-900">{c.customer.name}</span>
+                        <span className="type-body-sm text-grey-500">
+                          {formatRelative(c.updated_at)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-2">
                       <IntentBadge intent={c.last_intent} />
                       <StatusBadge status={c.status} />
                     </div>
@@ -128,14 +132,19 @@ export default async function DashboardOverviewPage() {
             <ul className="flex flex-col divide-y divide-grey-50">
               {recentBookings.map((a) => (
                 <li key={a.id} className="flex items-center justify-between gap-3 py-3">
-                  <div className="flex min-w-0 flex-col gap-1">
-                    <span className="truncate type-body-lg text-grey-900">{a.service}</span>
-                    <span className="type-body-sm text-grey-500">
-                      {a.tech ?? "Unassigned"} · {formatDateTime(a.scheduled_at)}
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-grey-50 text-grey-400">
+                      <CalendarCheck aria-hidden="true" size={16} />
                     </span>
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <span className="truncate type-body-lg font-medium text-grey-900">{a.service}</span>
+                      <span className="truncate type-body-sm text-grey-500">
+                        {a.tech ?? "Unassigned"} · {formatDateTime(a.scheduled_at)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="type-body-lg text-grey-900">{formatCurrency(a.price)}</span>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <span className="type-body-lg font-medium tabular-nums text-grey-900">{formatCurrency(a.price)}</span>
                     <StatusBadge status={a.status} />
                   </div>
                 </li>

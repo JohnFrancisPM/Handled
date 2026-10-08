@@ -48,22 +48,35 @@ function HoursForm({ defaults }: { defaults: FormValues }) {
       errorMessage={errorMessage}
       isDemo={isDemo}
     >
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
+        <div className="hidden grid-cols-3 gap-4 px-1 sm:grid">
+          <span className="type-body-sm font-medium text-grey-500">Day</span>
+          <span className="type-body-sm font-medium text-grey-500">Opens</span>
+          <span className="type-body-sm font-medium text-grey-500">Closes</span>
+        </div>
         {fields.map((f, i) => (
           <div
             key={f.id}
-            className="grid grid-cols-1 items-center gap-3 border-b border-grey-50 pb-3 sm:grid-cols-3"
+            className="grid grid-cols-1 items-center gap-3 border-b border-grey-50 pb-3 last:border-0 sm:grid-cols-3"
           >
             <input type="hidden" {...register(`hours.${i}.day_of_week`, { valueAsNumber: true })} />
-            <span className="type-body-lg text-grey-900">{weekdayName(i)}</span>
-            <label className="flex items-center gap-2">
-              <span className="sr-only">{weekdayName(i)} open time</span>
-              <Input type="time" {...register(`hours.${i}.open_time`)} />
-            </label>
-            <label className="flex items-center gap-2">
-              <span className="sr-only">{weekdayName(i)} close time</span>
-              <Input type="time" {...register(`hours.${i}.close_time`)} />
-            </label>
+            <span className="type-body-lg font-medium text-grey-900">{weekdayName(i)}</span>
+            <div className="flex flex-col gap-1">
+              <span className="type-body-sm text-grey-500 sm:hidden">Opens</span>
+              <Input
+                type="time"
+                aria-label={`${weekdayName(i)} open time`}
+                {...register(`hours.${i}.open_time`)}
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="type-body-sm text-grey-500 sm:hidden">Closes</span>
+              <Input
+                type="time"
+                aria-label={`${weekdayName(i)} close time`}
+                {...register(`hours.${i}.close_time`)}
+              />
+            </div>
           </div>
         ))}
       </div>

@@ -8,6 +8,7 @@ import { apiGet, apiPatch } from "@/lib/http/client";
 import { Badge, type BadgeTone } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
 import { Card } from "@/components/ui/Card";
+import { Avatar } from "@/components/ui/Avatar";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorCard } from "@/components/ui/ErrorCard";
@@ -109,9 +110,9 @@ export function LeadsQueue() {
       <ul className="flex flex-col gap-3">
         {data?.map((lead) => (
           <li key={lead.id}>
-            <Card className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <Card hover className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex gap-3">
-                {lead.reason === "photo_followup" && lead.media_url && (
+                {lead.reason === "photo_followup" && lead.media_url ? (
                   <a
                     href={lead.media_url}
                     target="_blank"
@@ -128,10 +129,12 @@ export function LeadsQueue() {
                       unoptimized
                     />
                   </a>
+                ) : (
+                  <Avatar name={lead.customer} size="md" />
                 )}
                 <div className="flex flex-col gap-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="type-body-lg text-grey-900">{lead.customer}</span>
+                    <span className="type-body-lg font-medium text-grey-900">{lead.customer}</span>
                     <Badge tone={REASON_TONE[lead.reason] ?? "grey"}>{humanize(lead.reason)}</Badge>
                     <span className="type-body-sm text-grey-300">
                       {formatRelative(lead.created_at)}
@@ -147,8 +150,8 @@ export function LeadsQueue() {
               </div>
 
               <div className="flex shrink-0 items-center gap-2">
-                <label htmlFor={`lead-${lead.id}`} className="sr-only">
-                  Update lead status
+                <label htmlFor={`lead-${lead.id}`} className="type-body-sm text-grey-500">
+                  Status
                 </label>
                 <Select
                   id={`lead-${lead.id}`}

@@ -79,7 +79,7 @@ export function AppointmentsTable() {
           <table className="w-full border-collapse text-left">
             <caption className="sr-only">Appointments</caption>
             <thead>
-              <tr className="border-b border-grey-100">
+              <tr className="border-b border-grey-100 bg-grey-25">
                 <Th>Service</Th>
                 <Th>Technician</Th>
                 <Th>Scheduled</Th>
@@ -91,15 +91,18 @@ export function AppointmentsTable() {
             </thead>
             <tbody>
               {data!.map((a) => (
-                <tr key={a.id} className="border-b border-grey-50 last:border-0 hover:bg-grey-25">
-                  <Td className="type-body-lg text-grey-900">{a.service ?? "—"}</Td>
-                  <Td>{a.tech ?? "Unassigned"}</Td>
-                  <Td>{formatDateTime(a.scheduled_at)}</Td>
-                  <Td>{a.arrival_window ?? "—"}</Td>
+                <tr
+                  key={a.id}
+                  className="border-b border-grey-50 transition-colors duration-[var(--motion-fast)] ease-ds-out last:border-0 hover:bg-grey-25"
+                >
+                  <Td className="whitespace-nowrap font-medium text-grey-900">{a.service ?? "—"}</Td>
+                  <Td className="whitespace-nowrap">{a.tech ?? "Unassigned"}</Td>
+                  <Td className="whitespace-nowrap">{formatDateTime(a.scheduled_at)}</Td>
+                  <Td className="whitespace-nowrap">{a.arrival_window ?? "—"}</Td>
                   <Td>
                     <StatusBadge status={a.status} />
                   </Td>
-                  <Td className="text-right type-body-lg text-grey-900">
+                  <Td className="whitespace-nowrap text-right font-medium tabular-nums text-grey-900">
                     {formatCurrency(a.price)}
                   </Td>
                   <Td className="text-center">
@@ -125,7 +128,7 @@ function Th({ children, className = "" }: { children: React.ReactNode; className
   return (
     <th
       scope="col"
-      className={`px-4 py-3 type-body-sm font-medium text-grey-500 ${className}`}
+      className={`whitespace-nowrap px-4 py-3 type-body-sm font-medium text-grey-500 ${className}`}
     >
       {children}
     </th>

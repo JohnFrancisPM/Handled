@@ -2,16 +2,17 @@
 
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { z } from "zod";
 import { TeamPanelSchema } from "@/lib/schemas";
 import { useProfileBundle, usePanelSave } from "@/components/profile/panel-utils";
 import { ProfileFormFrame } from "@/components/profile/ProfileFormFrame";
 import { PanelSkeleton } from "@/components/profile/PanelSkeleton";
+import { FormField } from "@/components/profile/FormField";
+import { RowCard } from "@/components/profile/RowCard";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { ChipsInput } from "@/components/profile/ChipsInput";
 import { ErrorCard } from "@/components/ui/ErrorCard";
 
@@ -54,40 +55,42 @@ function TeamForm({ defaults }: { defaults: FormValues }) {
       isDemo={isDemo}
     >
       <div className="flex flex-col gap-3">
+        {fields.length === 0 && (
+          <p className="type-body-sm text-grey-500">No technicians yet — add one below.</p>
+        )}
         {fields.map((f, i) => (
-          <Card key={f.id} elevated className="flex flex-col gap-3">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <Input placeholder="Name" aria-label="Technician name" {...register(`technicians.${i}.name`)} />
-              <Select {...register(`technicians.${i}.status`)} aria-label="Availability status">
-                <option value="available">Available</option>
-                <option value="sick">Sick</option>
-                <option value="vacation">Vacation</option>
-                <option value="off">Off</option>
-              </Select>
-              <Input
-                type="date"
-                aria-label="Status until"
-                {...register(`technicians.${i}.status_until`)}
+          <RowCard key={f.id} title={`Technician ${i + 1}`} onRemove={() => remove(i)} removeLabel="Remove technician">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <FormField label="Name" htmlFor={`tech-${i}-name`}>
+                <Input id={`tech-${i}-name`} placeholder="e.g. Dave Chen" {...register(`technicians.${i}.name`)} />
+              </FormField>
+              <FormField label="Availability" htmlFor={`tech-${i}-status`}>
+                <Select id={`tech-${i}-status`} {...register(`technicians.${i}.status`)}>
+                  <option value="available">Available</option>
+                  <option value="sick">Sick</option>
+                  <option value="vacation">Vacation</option>
+                  <option value="off">Off</option>
+                </Select>
+              </FormField>
+              <FormField label="Status until" htmlFor={`tech-${i}-until`} hint="Optional — when they return.">
+                <Input id={`tech-${i}-until`} type="date" {...register(`technicians.${i}.status_until`)} />
+              </FormField>
+            </div>
+            <FormField label="Skills" hint="Add a skill (e.g. drain) and press Enter.">
+              <Controller
+                control={control}
+                name={`technicians.${i}.skills`}
+                render={({ field }) => (
+                  <ChipsInput
+                    value={field.value ?? []}
+                    onChange={field.onChange}
+                    placeholder="e.g. drain"
+                    tone="brand"
+                  />
+                )}
               />
-            </div>
-            <Controller
-              control={control}
-              name={`technicians.${i}.skills`}
-              render={({ field }) => (
-                <ChipsInput
-                  value={field.value ?? []}
-                  onChange={field.onChange}
-                  placeholder="Add a skill (e.g. drain) and press Enter"
-                  tone="brand"
-                />
-              )}
-            />
-            <div>
-              <Button variant="ghost" size="sm" onClick={() => remove(i)} aria-label="Remove technician">
-                <Trash2 size={16} /> Remove
-              </Button>
-            </div>
-          </Card>
+            </FormField>
+          </RowCard>
         ))}
       </div>
 

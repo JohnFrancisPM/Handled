@@ -58,6 +58,8 @@
   --border-default: var(--color-grey-100);
   --border-hover: var(--color-grey-200);
   --focus-ring: var(--color-blue-500);
+  /* Scrim behind the mobile nav drawer — grey-900 at 50% (no new hex). */
+  --overlay: color-mix(in srgb, var(--color-grey-900) 50%, transparent);
 
   /* ---- Spacing (4px base) ---- */
   --space-0: 0px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;

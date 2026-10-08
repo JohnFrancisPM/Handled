@@ -37,22 +37,25 @@ export function AnalyticsView() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex items-center gap-2">
-        <label htmlFor="range" className="type-body-sm text-grey-500">
-          Range
-        </label>
-        <Select
-          id="range"
-          value={range}
-          onChange={(e) => setRange(e.target.value as ConversionRange)}
-          className="w-48"
-        >
-          {RANGES.map((r) => (
-            <option key={r.value} value={r.value}>
-              {r.label}
-            </option>
-          ))}
-        </Select>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-grey-100 pb-4">
+        <span className="type-body-lg font-medium text-grey-900">Performance</span>
+        <div className="flex items-center gap-2">
+          <label htmlFor="range" className="type-body-sm text-grey-500">
+            Range
+          </label>
+          <Select
+            id="range"
+            value={range}
+            onChange={(e) => setRange(e.target.value as ConversionRange)}
+            className="w-48"
+          >
+            {RANGES.map((r) => (
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
+            ))}
+          </Select>
+        </div>
       </div>
 
       {metricsQ.isLoading && (
@@ -97,12 +100,36 @@ export function AnalyticsView() {
           </div>
 
           <Card className="flex flex-col gap-4">
-            <h2 className="type-h5 text-grey-900">Conversion funnel</h2>
+            <div className="flex flex-col gap-1">
+              <h2 className="type-h5 text-grey-900">Conversion funnel</h2>
+              <p className="type-body-sm text-grey-500">
+                Inbound conversations that became booked jobs, then completed &amp; paid.
+              </p>
+            </div>
             <FunnelChart
               inbound={metricsQ.data.inbound}
               booked={metricsQ.data.booked}
               closedWon={metricsQ.data.closed_won}
             />
+            <div className="grid grid-cols-3 gap-4 border-t border-grey-100 pt-4">
+              <FunnelStat label="Inbound" value={metricsQ.data.inbound} tone="brand" />
+              <FunnelStat
+                label="Booked"
+                value={metricsQ.data.booked}
+                caption={formatPercent(metricsQ.data.conversion_rate)}
+                tone="green"
+              />
+              <FunnelStat
+                label="Closed won"
+                value={metricsQ.data.closed_won}
+                caption={
+                  metricsQ.data.inbound > 0
+                    ? formatPercent(metricsQ.data.closed_won / metricsQ.data.inbound)
+                    : undefined
+                }
+                tone="green"
+              />
+            </div>
           </Card>
         </>
       )}
@@ -115,6 +142,34 @@ export function AnalyticsView() {
         )}
         {revenueQ.data && <RevenueTable jobs={revenueQ.data} />}
       </section>
+    </div>
+  );
+}
+
+const DOT_TONE = {
+  brand: "bg-brand",
+  green: "bg-green-500"
+} as const;
+
+function FunnelStat({
+  label,
+  value,
+  caption,
+  tone
+}: {
+  label: string;
+  value: number;
+  caption?: string;
+  tone: keyof typeof DOT_TONE;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="flex items-center gap-2 type-body-sm text-grey-500">
+        <span className={`h-2 w-2 shrink-0 rounded-full ${DOT_TONE[tone]}`} aria-hidden="true" />
+        {label}
+      </span>
+      <span className="type-h5 tabular-nums text-grey-900">{value}</span>
+      {caption && <span className="type-body-sm text-grey-500">{caption} of inbound</span>}
     </div>
   );
 }

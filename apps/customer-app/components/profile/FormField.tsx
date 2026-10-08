@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils/cn";
 
 /** Labelled form field with inline validation message (a11y: label + error id). */
 export function FormField({
@@ -6,16 +7,18 @@ export function FormField({
   htmlFor,
   error,
   hint,
+  className,
   children
 }: {
   label: string;
   htmlFor?: string;
   error?: string;
   hint?: string;
+  className?: string;
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className={cn("flex flex-col gap-2", className)}>
       <label htmlFor={htmlFor} className="type-body-sm font-medium text-grey-700">
         {label}
       </label>

@@ -2,17 +2,18 @@
 
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { z } from "zod";
 import { EmergencyPanelSchema } from "@/lib/schemas";
 import { useProfileBundle, usePanelSave } from "@/components/profile/panel-utils";
 import { ProfileFormFrame } from "@/components/profile/ProfileFormFrame";
 import { PanelSkeleton } from "@/components/profile/PanelSkeleton";
+import { FormField } from "@/components/profile/FormField";
+import { RowCard } from "@/components/profile/RowCard";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { ErrorCard } from "@/components/ui/ErrorCard";
 
 type FormValues = z.infer<typeof EmergencyPanelSchema>;
@@ -54,36 +55,42 @@ function EmergencyForm({ defaults }: { defaults: FormValues }) {
       isDemo={isDemo}
     >
       <div className="flex flex-col gap-3">
+        {fields.length === 0 && (
+          <p className="type-body-sm text-grey-500">No emergency rules yet — add one below.</p>
+        )}
         {fields.map((f, i) => (
-          <Card key={f.id} elevated className="flex flex-col gap-3">
-            <Input
-              placeholder="Keyword or pattern (e.g. gas / gas smell)"
-              aria-label="Keyword or pattern"
-              {...register(`emergency_rules.${i}.keyword_or_pattern`)}
-            />
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Select {...register(`emergency_rules.${i}.severity`)} aria-label="Severity">
-                <option value="emergency">Emergency</option>
-                <option value="urgent">Urgent</option>
-              </Select>
-              <Select {...register(`emergency_rules.${i}.action`)} aria-label="Action">
-                <option value="escalate_oncall">Escalate to on-call</option>
-                <option value="advise_911">Advise 911</option>
-                <option value="same_day_priority">Same-day priority</option>
-              </Select>
+          <RowCard key={f.id} title={`Rule ${i + 1}`} onRemove={() => remove(i)} removeLabel="Remove rule">
+            <FormField label="Keyword or pattern" htmlFor={`er-${i}-keyword`}>
+              <Input
+                id={`er-${i}-keyword`}
+                placeholder="e.g. gas / gas smell"
+                {...register(`emergency_rules.${i}.keyword_or_pattern`)}
+              />
+            </FormField>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <FormField label="Severity" htmlFor={`er-${i}-severity`}>
+                <Select id={`er-${i}-severity`} {...register(`emergency_rules.${i}.severity`)}>
+                  <option value="emergency">Emergency</option>
+                  <option value="urgent">Urgent</option>
+                </Select>
+              </FormField>
+              <FormField label="Action" htmlFor={`er-${i}-action`}>
+                <Select id={`er-${i}-action`} {...register(`emergency_rules.${i}.action`)}>
+                  <option value="escalate_oncall">Escalate to on-call</option>
+                  <option value="advise_911">Advise 911</option>
+                  <option value="same_day_priority">Same-day priority</option>
+                </Select>
+              </FormField>
             </div>
-            <Textarea
-              placeholder="Guidance the AI gives the customer"
-              aria-label="Guidance text"
-              rows={2}
-              {...register(`emergency_rules.${i}.guidance_text`)}
-            />
-            <div>
-              <Button variant="ghost" size="sm" onClick={() => remove(i)} aria-label="Remove rule">
-                <Trash2 size={16} /> Remove
-              </Button>
-            </div>
-          </Card>
+            <FormField label="Guidance text" htmlFor={`er-${i}-guidance`} hint="What the AI tells the customer.">
+              <Textarea
+                id={`er-${i}-guidance`}
+                placeholder="e.g. Leave the house now and call 911 from outside."
+                rows={2}
+                {...register(`emergency_rules.${i}.guidance_text`)}
+              />
+            </FormField>
+          </RowCard>
         ))}
       </div>
 

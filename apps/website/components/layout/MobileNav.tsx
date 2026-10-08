@@ -106,7 +106,15 @@ export function MobileNav() {
                   </Link>
                 );
               })}
-              <Button href={site.primaryCta.href} fullWidth className="mt-4">
+              <Button
+                href={site.loginCta.href}
+                variant="secondary"
+                fullWidth
+                className="mt-4"
+              >
+                {site.loginCta.label}
+              </Button>
+              <Button href={site.primaryCta.href} fullWidth className="mt-2">
                 {site.primaryCta.label}
               </Button>
             </nav>

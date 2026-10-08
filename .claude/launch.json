@@ -7,6 +7,13 @@
       "runtimeArgs": ["run", "dev"],
       "cwd": "apps/customer-app",
       "port": 3000
+    },
+    {
+      "name": "website",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "-p", "3100"],
+      "cwd": "apps/website",
+      "port": 3100
     }
   ]
 }

@@ -16,7 +16,10 @@ export function Nav() {
 
           <NavLinks />
 
-          <div className="hidden md:block">
+          <div className="hidden items-center gap-3 md:flex">
+            <Button href={site.loginCta.href} variant="secondary">
+              {site.loginCta.label}
+            </Button>
             <Button href={site.primaryCta.href}>{site.primaryCta.label}</Button>
           </div>
 

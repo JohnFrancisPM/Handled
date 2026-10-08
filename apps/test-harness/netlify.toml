@@ -1,0 +1,15 @@
+# Netlify config for the Handled test-harness. Its own Netlify site, separate from
+# the website (repo-root netlify.toml) and the customer-app (apps/customer-app/netlify.toml).
+# Monorepo: the CLI runs against the real git root, so base resolves correctly.
+
+[build]
+  base = "apps/test-harness"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "20"            # Node 20 LTS (TH-13)
+
+# Next.js on Netlify — the Next Runtime renders App Router pages and turns the
+# Route Handlers (runtime = "nodejs") into Netlify Functions. Do NOT set `publish`.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

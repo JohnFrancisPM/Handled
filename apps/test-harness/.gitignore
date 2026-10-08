@@ -1,0 +1,24 @@
+# deps
+/node_modules
+
+# next build output
+/.next
+/out
+
+# env (keep .env.example)
+.env
+.env.local
+.env.*.local
+
+# netlify link state + local build
+.netlify
+
+# test artifacts
+/playwright-report
+/test-results
+/coverage
+
+# os / editor
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts

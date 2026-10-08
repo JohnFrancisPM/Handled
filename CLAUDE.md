@@ -10,9 +10,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |---|---|---|---|
 | **Marketing website** | `apps/website` | ✅ **Built & live** (Stages 1–7 done, deployed to Netlify) | Static-first public site. No AI; marketing + one lead-capture endpoint. |
 | **Customer experience** | `apps/customer-app` + `n8n/` | ✅ **Built, deployed & hardened, Stages 1–7** (dashboard + Supabase schema/seed + n8n agentic backend + tests; live on its own Netlify site `handled-customer-app.netlify.app`; scoped Stage-7 review done — security headers, RLS re-assertion, logout). | Owner-facing Next.js dashboard + a one-webhook multi-agent n8n backend over Supabase. |
-| **Test harness** | `apps/<tbd>` (not created yet) | 🔲 Planned | Standalone app to impersonate customers over SMS-style chat and watch the AI respond. |
+| **Test harness** | `apps/test-harness` | ✅ **Built & hardened, Stages 1–5 + 7** (local-only; Stage 6 deploy intentionally skipped — it's a builder tool). Standalone SMS-style tester over the n8n webhook; 57 Vitest + 9 Playwright tests incl. axe AA. | Standalone app to impersonate customers over SMS-style chat and watch the AI respond. |
 
-Each app is built independently through the stage-gated workflow below, gets its own `apps/<app>/` folder and its own `docs/<App>/` spec tree, and must not assume the others exist. **`apps/website` and `apps/customer-app` (+ `n8n/`) exist today** — the sections below are per-app; the test harness is summarized under "Planned apps."
+Each app is built independently through the stage-gated workflow below, gets its own `apps/<app>/` folder and its own `docs/<App>/` spec tree, and must not assume the others exist. **All three apps exist today** — the sections below are per-app. (The planned **Evaluations** work is summarized under "Planned/other work.")
 
 ## Layout
 
@@ -20,9 +20,9 @@ Each app is built independently through the stage-gated workflow below, gets its
 apps/
   website/             The marketing site (Next.js 14 App Router). ALL its commands run from here.
   customer-app/        Handled customer experience dashboard (Next.js 14). ALL its commands run from here.
-  <test-harness>/      (future) Test harness — not created yet
+  test-harness/        SMS-style tester (Next.js 14). Decoupled: no DB, proxies to the n8n webhook. ALL its commands run from here.
 n8n/                   Customer-app agentic SMS backend: handled-agentic.json (importable workflow) + prompts/ (10 verbatim prompts) + README (deploy guide). See "n8n backend" below.
-scripts/               Builder-side utilities (OUTSIDE the apps): export-evals.ts/.sql + eval-jsonl.ts (pure, unit-testable row builder) — Azure AI Foundry eval export (direct DB pull, service-role); build-cloud-workflow.js — n8n Cloud (Starter) inliner.
+scripts/               Builder-side utilities (OUTSIDE the apps): export-evals.ts/.sql + eval-jsonl.ts (pure, unit-testable row builder) — Azure AI Foundry eval export (direct DB pull, service-role); build-cloud-workflow.js — n8n Cloud (Starter) inliner; build-harness-fixture.ts — test-harness fixture builder (parses supabase/seed SQL → apps/test-harness/fixtures/customers.json; exports a pure buildCustomers() for tests).
 supabase/
   migrations/0001_init.sql   Customer-app schema: 17 tables, RLS, triggers, realtime. Run first.
   seed/                      Acme Plumbing demo data, numbered 01–06 — run IN ORDER after the migration (see seed/README.md).
@@ -33,15 +33,15 @@ docs/
   Competitive Research.md · evals.xlsx   Supporting research / eval insights
   website/             Website specs: engineering/ (HLD), implementation/ (per-concern + supabase-schema.sql + .env.example), deployment/ (netlify-deploy.md)
   customer-app/        Customer-app specs: engineering/engineering-doc.md + implementation/*.md (incl. n8n-*.md, supabase-schema.sql, .env.example, eval-pipeline.md, seed-data.md) + security/security-plan.md (Stage 7 review)
+  test-harness/        Test-harness specs: engineering/engineering-doc.md + implementation/*.md (fixture-extraction, webhook-proxy, scenario-set, chat-ui, graceful-degradation, env-and-config, testing, deployment, .env.example) + security/security-plan.md (scoped Stage 7 review)
   security/            security-plan.md (website Stage 7 review)
-  <App>/               (future) each new app gets its own engineering/ + implementation/ tree here
 dev-os/                The stage-gated build workflow "operating system" (see dev-os/README.md)
 .claude/skills/        Slash-command skills (engineering-planner, implementation-specs, frontend-setup, design-system, security-foundation)
 .claude/agents/        Planner/reviewer subagents  ·  .claude/agent-memory/  their persisted notes
-netlify.toml           REPO-ROOT deploy config targets apps/website (base = apps/website, Next runtime). apps/customer-app has its OWN netlify.toml (base = apps/customer-app) for a SEPARATE Netlify site.
+netlify.toml           REPO-ROOT deploy config targets apps/website (base = apps/website, Next runtime). apps/customer-app and apps/test-harness each have their OWN netlify.toml for SEPARATE sites (the test-harness one is config-only — it's run locally, not deployed).
 ```
 
-> **Monorepo gotcha:** `supabase/` holds files for *both* apps — the `migrations/` + `seed/` trees are the **customer-app** schema/data; `rls-policies.sql` is the **website** Stage-7 review while `customer-app-rls.sql` is the **customer-app's**. Likewise the repo-root `netlify.toml` is the website's; the customer-app's is `apps/customer-app/netlify.toml`. Don't cross them.
+> **Monorepo gotcha:** `supabase/` holds files for the **customer-app** — the `migrations/` + `seed/` trees are its schema/data; `rls-policies.sql` is the **website** Stage-7 review while `customer-app-rls.sql` is the **customer-app's**. The **test-harness** has NO Supabase files; it only reads `supabase/seed/01,04,05,06` **at build time** (via `scripts/build-harness-fixture.ts`) to generate its committed fixture. Likewise the repo-root `netlify.toml` is the website's; the customer-app's is `apps/customer-app/netlify.toml`. Don't cross them.
 
 ---
 
@@ -164,13 +164,43 @@ One importable workflow, `n8n/handled-agentic.json` (52 nodes), is the **single 
 
 ---
 
-## Planned apps (not built yet)
+## Test harness app (`apps/test-harness`)
 
-Build these only when asked, via the full stage-gated workflow, writing specs to `docs/<App>/`. Requirements live in `notepad.md` and `docs/PRD.md` — read them first.
+A standalone **Next.js 14 (App Router), TypeScript strict** SMS-style tester. Stages 1–5 + 7 complete; **runs locally only** — Stage 6 deploy was intentionally skipped (it's a builder/demo tool, not a public surface). Specs: `docs/test-harness/engineering/engineering-doc.md` + `docs/test-harness/implementation/*.md`.
 
-**Test harness** — a completely separate app to exercise the customer experience. It POSTs to the **same** n8n webhook above (different `from_phone` per impersonated customer) and renders replies as SMS bubbles — it needs only the endpoint URL, the `X-Handled-Secret`, and the contract schema; no other coupling:
-- Impersonate multiple users, view each one's chat history, send messages as them, and see the AI's response.
-- Mimics **SMS** (looks like texting Acme Plumbing). Loads the same ~30 backfilled customers.
+### Commands (run from `apps/test-harness/`)
+
+```bash
+npm run dev            # local dev server
+npm run build          # production build (App Router page + 3 Route Handlers → Functions)
+npm run typecheck      # tsc --noEmit (strict)
+npm run lint           # next lint
+npm run test           # Vitest (jsdom) — tests/unit + tests/integration (57 tests)
+npm run test:e2e       # Playwright + axe a11y (first: npx playwright install chromium) (9 tests)
+npm run build:fixture  # regenerate fixtures/customers.json from supabase/seed (builder-side)
+```
+
+Single test: `npm run test -- tests/unit/<file>.test.ts`. Node **20 LTS**; the `@/` alias maps to the `apps/test-harness` root (tsconfig/vitest/playwright kept in sync). Libs: React Query + Zustand + React Hook Form + Zod + lucide-react (no Recharts, **no `@supabase/*`**).
+
+### Architecture — deliberately decoupled
+
+**No database, ever.** Unlike the customer-app, the harness has NO Supabase client and stores nothing. It reads its ~30 customers + backfilled history from a **committed JSON fixture** (`fixtures/customers.json`), built ONCE by `scripts/build-harness-fixture.ts` (parses `supabase/seed/01,04,05,06` with `pgsql-ast-parser`; normalizes `now()±interval` → relative `t+Ns` labels, maps `tool_calls`→`actions` with `tool`→`type`, handles escaped quotes / null-name / spam threads). Regenerate with `npm run build:fixture` and commit when the seed changes (output is deterministic/git-clean). The batch set (`fixtures/scenarios.json`, 50 eval cases + 5 extras) is hand-maintained.
+
+**Server webhook proxy — the secret stays server-side.** The browser calls only the app's own `/api/*`; it never talks to n8n directly and never sees the secret (there are deliberately NO `NEXT_PUBLIC_*` vars). Three Route Handlers (`runtime="nodejs"`, `force-dynamic`, typed `{ok,data}|{ok,error}` envelope via `lib/api/envelope.ts`): `/api/send` (one turn, 16 KB body cap), `/api/batch` (fan-out), `/api/health` (config booleans only). `lib/webhook/callWebhook.ts` is the single outbound choke point; the outbound URL is always env (`getWebhookUrl()`), never user input.
+
+**Classify on `body.ok`, NEVER HTTP status.** The live n8n webhook ALWAYS returns HTTP 200 — even auth/validation failures come back as `{"ok":false,"error":...}`. The proxy branches on the body into three distinct client states: (a) success incl. a **degraded-but-200** reply (e.g. "Agent stopped due to max iterations") shown verbatim — do NOT hide it; (b) webhook `ok:false` → a config error (not a chat reply); (c) unreachable/timeout → offline-mock (if `OFFLINE_MOCK=true`) else a soft error. **Observed webhook latency is 19–49 s**, so `WEBHOOK_TIMEOUT_MS` defaults to **60000** — do not lower below ~50000.
+
+**Batch is hard-capped at 5.** `getBatchConcurrency()` clamps `BATCH_CONCURRENCY` to ≤ 5 concurrent phone-groups; scenarios sharing a `from_phone` run **serially** so n8n per-`(org,phone)` context never interleaves. The harness drives traffic and shows a *lenient* intent-match chip — it does **not** grade (the authoritative scorer is the customer-app's `tests/eval/`). A full live batch fires ~55 webhook calls (Anthropic spend) and can take minutes — fine locally; production streaming is a deferred Phase-2 item.
+
+**Design tokens only** — same `/design-system` rule and shared `styles/tokens.css` (copied from the other apps) as the website/customer-app.
+
+### Config & running it
+
+All env is **server-only**. Copy `.env.example` → `.env.local`: `N8N_WEBHOOK_URL`, `N8N_WEBHOOK_SECRET` (sent as the `X-Handled-Secret` header), `ACME_BUSINESS_ID` (default `acme-plumbing`), plus optional `OFFLINE_MOCK` / `WEBHOOK_TIMEOUT_MS` / `BATCH_CONCURRENCY`. With **no env set** the app still runs in offline/mock mode (demo-safe). Real replies need the n8n webhook live (verified — the secret is enforced in the response body). CSP is stricter than the dashboard's (`connect-src 'self'`; `'unsafe-eval'` is **dev-only** for Fast Refresh, never in production). Scoped Stage-7 review (no auth/DB/uploads; what IS covered: server-only secret, body cap, typed-error non-leakage, strict CSP): `docs/test-harness/security/security-plan.md`.
+
+---
+
+## Planned / other work
 
 **Evaluations** — text inputs only (not phone). Conversation history saved in Supabase is uploaded to **Azure AI Foundry** and scored with Azure's evaluator schema (record shape `question`/`response`/`citation`/`reasoning`). Both halves are already built (the Azure export **and** the offline graded launch-gate loop) — see "Evals — two separate halves" under Customer-app.
 

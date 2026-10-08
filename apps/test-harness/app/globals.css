@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design tokens (primitives + semantic + spacing + motion) — shared with the other apps. */
+@import "../styles/tokens.css";
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  letter-spacing: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Typography roles (design.md §Typography). */
+.type-h1 { font-size: 48px; font-weight: 700; line-height: 56px; letter-spacing: 0; }
+.type-h2 { font-size: 36px; font-weight: 700; line-height: 44px; letter-spacing: 0; }
+.type-h3 { font-size: 30px; font-weight: 600; line-height: 38px; letter-spacing: 0; }
+.type-h4 { font-size: 28px; font-weight: 600; line-height: 36px; letter-spacing: 0; }
+.type-h5 { font-size: 24px; font-weight: 500; line-height: 32px; letter-spacing: 0; }
+.type-body-lg { font-size: 16px; font-weight: 500; line-height: 24px; letter-spacing: 0; }
+.type-body-sm { font-size: 12px; font-weight: 400; line-height: 18px; letter-spacing: 0; }
+
+/* Modal/drawer scrim (token-backed; see --overlay in tokens.css). */
+.bg-overlay { background-color: var(--overlay); }
+
+/* Visible focus ring (a11y — design.md state table "Focus"). */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

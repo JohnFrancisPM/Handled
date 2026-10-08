@@ -1,4 +1,5 @@
 - [Project Overview](project-handled.md) — Handled is an AI office manager for home-service SMBs; three apps (website, customer-app, test-harness) built via a 7-stage workflow
 - [Website Decisions](decisions-website.md) — Key architectural decisions for the marketing website engineering doc
 - [Customer-App Decisions](decisions-customer-app.md) — Architectural decisions for the customer-app (dashboard + Supabase + n8n multi-agent) engineering doc
+- [Test-Harness Decisions](decisions-test-harness.md) — Architectural decisions for the test-harness (standalone SMS tester driving the n8n webhook) engineering doc
 - [Run History](run-history.md) — Log of each engineering-planner invocation, app, cycles, and verdict

@@ -1,2 +1,3 @@
 - [Website review log](review-website.md) — round-by-round verdicts and issues for the `website` engineering doc
 - [Customer-app review log](review-customer-app.md) — round-by-round verdicts and issues for the `customer-app` engineering doc
+- [Test-harness review log](review-test-harness.md) — round-by-round verdicts and issues for the `test-harness` engineering doc

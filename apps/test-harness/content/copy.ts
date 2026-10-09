@@ -12,6 +12,18 @@ export const copy = {
     count: (n: number) => `${n} seeded customers`
   },
 
+  newCustomer: {
+    open: "New customer",
+    title: "New customer",
+    group: "New this session",
+    badge: "new customer",
+    namePlaceholder: "Name (optional)",
+    phonePlaceholder: "Phone (optional — auto if blank)",
+    submit: "Start conversation",
+    cancel: "Cancel",
+    hint: "Leave blank for a fresh, unseen number — the AI will treat them as a first-time contact."
+  },
+
   thread: {
     emptyTitle: "Select a customer to start texting",
     emptyBody: "Pick someone on the left to see their history and send a message as them.",

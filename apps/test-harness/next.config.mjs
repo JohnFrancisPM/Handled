@@ -11,7 +11,7 @@ const scriptSrc = isDev
   ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
   : "script-src 'self' 'unsafe-inline'";
 
-const csp = [
+const cspDirectives = [
   "default-src 'self'",
   "base-uri 'self'",
   "object-src 'none'",
@@ -23,9 +23,18 @@ const csp = [
   scriptSrc,
   "connect-src 'self'",
   "form-action 'self'",
-  "manifest-src 'self'",
-  "upgrade-insecure-requests"
-].join("; ");
+  "manifest-src 'self'"
+];
+
+// `upgrade-insecure-requests` rewrites every http subresource to https. In production the
+// harness would be served over HTTPS, so it's a harmless safety net there. But this app is
+// local-only (Stage 6 deploy skipped) and runs on http://localhost — and Safari/WebKit,
+// unlike Chrome (which exempts loopback), upgrades the page's own JS/CSS/font/fetch requests
+// to https://localhost, which has no TLS, leaving the page unstyled/broken. So emit it ONLY
+// in production. Same reasoning for HSTS below (it's only meaningful over HTTPS).
+if (!isDev) cspDirectives.push("upgrade-insecure-requests");
+
+const csp = cspDirectives.join("; ");
 
 const securityHeaders = [
   { key: "Content-Security-Policy", value: csp },
@@ -33,7 +42,8 @@ const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()" },
-  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" }
+  // HSTS pins the origin to HTTPS; pointless (and ignored) over http://localhost, so dev-skip it.
+  ...(isDev ? [] : [{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" }])
 ];
 
 const nextConfig = {

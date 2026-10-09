@@ -13,12 +13,23 @@ import type { Customer } from "@/lib/fixtures/types";
 import { useBatchRun } from "@/lib/hooks/useBatchRun";
 import { useHealth } from "@/lib/hooks/useHealth";
 import { useSessionStore } from "@/lib/store/session";
+import { makeNewCustomer } from "@/lib/session/newCustomer";
+import type { NewCustomerInput } from "@/components/roster/NewCustomerForm";
 import { cn } from "@/lib/utils/cn";
 
 export function AppShell({ customers }: { customers: Customer[] }) {
   const activeId = useSessionStore((s) => s.activeCustomerId);
   const setActive = useSessionStore((s) => s.setActiveCustomer);
-  const active = customers.find((c) => c.id === activeId) ?? null;
+  const newCustomers = useSessionStore((s) => s.adHocCustomers);
+  const addAdHoc = useSessionStore((s) => s.addAdHocCustomer);
+  const active = [...newCustomers, ...customers].find((c) => c.id === activeId) ?? null;
+
+  const createNew = (input: NewCustomerInput) => {
+    const taken = new Set([...customers, ...newCustomers].map((c) => c.phone));
+    const customer = makeNewCustomer({ name: input.name, phone: input.phone, taken });
+    addAdHoc(customer);
+    setActive(customer.id);
+  };
 
   const { data: health } = useHealth();
   const batch = useBatchRun();
@@ -44,8 +55,10 @@ export function AppShell({ customers }: { customers: Customer[] }) {
       <main className="flex min-h-0 flex-1">
         <CustomerRoster
           customers={customers}
+          newCustomers={newCustomers}
           activeId={activeId}
           onSelect={setActive}
+          onCreateNew={createNew}
           className={cn(
             "min-h-0 flex-col border-r border-grey-100 bg-white md:flex md:w-80",
             active ? "hidden md:flex" : "flex w-full"

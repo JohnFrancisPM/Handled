@@ -95,6 +95,35 @@ describe("/api/send", () => {
     expect(env.data.agent).toBe("offline-mock");
   });
 
+  it("ad-hoc new customer (fromPhone, no fixture row) → ok, sends that phone", async () => {
+    const seen: { from_phone?: string; customer_name?: string } = {};
+    global.fetch = vi.fn(async (_url, init?: RequestInit) => {
+      seen.from_phone = JSON.parse(String(init?.body)).from_phone;
+      seen.customer_name = JSON.parse(String(init?.body)).customer_name;
+      return jsonRes({ ok: true, reply: "Happy to help — when works for you?", intent: "book", agent: "new_booking" });
+    }) as unknown as typeof fetch;
+    const res = await POST(
+      req({ customerId: "new-abc", text: "Hi, I'd like to book a plumber", fromPhone: "+15559990001", customerName: "Dana New" })
+    );
+    expect(res.status).toBe(200);
+    const env = await res.json();
+    expect(env.ok).toBe(true);
+    expect(env.data.intent).toBe("book");
+    expect(seen.from_phone).toBe("+15559990001");
+    expect(seen.customer_name).toBe("Dana New");
+  });
+
+  it("ad-hoc new customer with no name omits customer_name", async () => {
+    const seen: Record<string, unknown> = {};
+    global.fetch = vi.fn(async (_url, init?: RequestInit) => {
+      Object.assign(seen, JSON.parse(String(init?.body)));
+      return jsonRes({ ok: true, reply: "hi", intent: "book", agent: "new_booking" });
+    }) as unknown as typeof fetch;
+    const env = await (await POST(req({ customerId: "new-xyz", text: "book me", fromPhone: "+15559990002" }))).json();
+    expect(env.ok).toBe(true);
+    expect("customer_name" in seen).toBe(false);
+  });
+
   it("degraded 200 passes through as success (not hidden)", async () => {
     global.fetch = vi.fn(async () =>
       jsonRes({ ok: true, reply: "Agent stopped due to max iterations.", intent: "book", agent: "new_booking", actions: [] })

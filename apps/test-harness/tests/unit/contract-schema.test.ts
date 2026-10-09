@@ -16,6 +16,12 @@ describe("sendRequestSchema", () => {
     expect(sendRequestSchema.safeParse({ customerId: "c1", text: "   " }).success).toBe(false);
     expect(sendRequestSchema.safeParse({ customerId: "c1", text: "x".repeat(2001) }).success).toBe(false);
   });
+  it("accepts optional ad-hoc fromPhone/customerName and enforces the phone regex", () => {
+    expect(
+      sendRequestSchema.safeParse({ customerId: "new-1", text: "hi", fromPhone: "+15559990001", customerName: "Dana" }).success
+    ).toBe(true);
+    expect(sendRequestSchema.safeParse({ customerId: "new-1", text: "hi", fromPhone: "nope" }).success).toBe(false);
+  });
 });
 
 describe("webhookRequestSchema", () => {

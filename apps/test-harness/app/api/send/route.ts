@@ -3,7 +3,7 @@ import { readJsonCapped } from "@/lib/api/body";
 import { isOfflineMock } from "@/lib/env";
 import { getCustomerById } from "@/lib/fixtures/load";
 import { sendRequestSchema } from "@/lib/validation/contract";
-import { sendTurn } from "@/lib/webhook/send";
+import { sendTurn, type SendIdentity } from "@/lib/webhook/send";
 import { mockReplyFor } from "@/lib/webhook/mock";
 
 export const runtime = "nodejs";
@@ -20,15 +20,24 @@ export async function POST(req: Request) {
   const parsed = sendRequestSchema.safeParse(json);
   if (!parsed.success) return fail("validation");
 
-  const customer = getCustomerById(parsed.data.customerId);
-  if (!customer) return fail("not_found");
+  const { customerId, text, fromPhone, customerName } = parsed.data;
 
-  const outcome = await sendTurn(customer, parsed.data.text);
+  // Ad-hoc "new customer": the client supplies an explicit phone (a number the agent has
+  // never seen) — use it directly. Otherwise resolve a seeded customer from the fixture.
+  const identity: SendIdentity | null = fromPhone
+    ? { phone: fromPhone, name: customerName ?? null }
+    : (() => {
+        const c = getCustomerById(customerId);
+        return c ? { phone: c.phone, name: c.name } : null;
+      })();
+  if (!identity) return fail("not_found");
+
+  const outcome = await sendTurn(identity, text);
   if (outcome.kind === "ok") return ok(outcome.result);
   if (outcome.kind === "error") return fail(outcome.code);
 
   // unreachable → mock (if enabled) or a soft error
   return isOfflineMock()
-    ? ok(mockReplyFor(customer, parsed.data.text))
+    ? ok(mockReplyFor({ name: identity.name }, text))
     : fail("webhook_unavailable");
 }

@@ -4,9 +4,11 @@ import { useEffect, useRef } from "react";
 import { MessageBubble, type BubbleTurn } from "@/components/thread/MessageBubble";
 import { Composer } from "@/components/thread/Composer";
 import { EmptyState } from "@/components/system/EmptyState";
+import { Chip } from "@/components/system/Chip";
 import { copy } from "@/content/copy";
 import { customerLabel } from "@/lib/fixtures/load";
 import type { Customer } from "@/lib/fixtures/types";
+import { isAdHocCustomer } from "@/lib/session/newCustomer";
 import { useSendTurn } from "@/lib/hooks/useSendTurn";
 import { useSessionStore } from "@/lib/store/session";
 import { initials } from "@/lib/utils/format";
@@ -30,6 +32,7 @@ export function ChatThread({ customer }: { customer: Customer | null }) {
   }
 
   const label = customerLabel(customer);
+  const adHoc = isAdHocCustomer(customer);
   const fixtureTurns: BubbleTurn[] = customer.history.map((h) => ({ ...h }));
   const live: BubbleTurn[] = liveTurns.map((t) => ({
     role: t.role,
@@ -54,6 +57,7 @@ export function ChatThread({ customer }: { customer: Customer | null }) {
             as {label} ({customer.phone})
           </span>
         </div>
+        {adHoc ? <Chip color="grey">{copy.newCustomer.badge}</Chip> : null}
       </header>
 
       <div
@@ -77,7 +81,14 @@ export function ChatThread({ customer }: { customer: Customer | null }) {
 
       <Composer
         pending={isPending}
-        onSend={(text) => send({ customerId: customer.id, text })}
+        onSend={(text) =>
+          send({
+            customerId: customer.id,
+            text,
+            // Ad-hoc customers have no fixture row, so pass their identity explicitly.
+            ...(adHoc ? { fromPhone: customer.phone, customerName: customer.name ?? undefined } : {})
+          })
+        }
         onReset={() => resetThread(customer.id)}
       />
     </section>

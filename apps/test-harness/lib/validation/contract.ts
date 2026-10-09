@@ -3,7 +3,12 @@ import { z } from "zod";
 // --- client → OUR routes ---
 export const sendRequestSchema = z.object({
   customerId: z.string().min(1),
-  text: z.string().trim().min(1).max(2000) // matches contract text 1–2000
+  text: z.string().trim().min(1).max(2000), // matches contract text 1–2000
+  // Ad-hoc ("new customer") identity — present ONLY for customers created this session
+  // that have no fixture row. When fromPhone is set the send route uses it (and the
+  // optional name) directly instead of resolving from_phone/name from the committed fixture.
+  fromPhone: z.string().regex(/^\+?[0-9]{7,15}$/).optional(), // same rule as the webhook contract
+  customerName: z.string().trim().min(1).max(80).optional()
 });
 
 export const batchRequestSchema = z.object({

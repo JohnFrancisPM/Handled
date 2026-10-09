@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { Action } from "@/lib/types";
+import type { Customer } from "@/lib/fixtures/types";
 
 /** A turn created THIS session (not from the fixture). Nothing is persisted. */
 export interface LiveTurn {
@@ -16,8 +17,10 @@ export interface LiveTurn {
 
 interface SessionState {
   activeCustomerId: string | null;
+  adHocCustomers: Customer[]; // "new customers" created this session (not persisted, no fixture row)
   liveTurns: Record<string, LiveTurn[]>; // keyed by customerId; appended after fixture history
   setActiveCustomer: (id: string) => void;
+  addAdHocCustomer: (customer: Customer) => void;
   appendTurn: (customerId: string, turn: LiveTurn) => void;
   updateLastPending: (customerId: string, patch: Partial<LiveTurn>) => void;
   resetThread: (customerId: string) => void;
@@ -25,8 +28,11 @@ interface SessionState {
 
 export const useSessionStore = create<SessionState>((set) => ({
   activeCustomerId: null,
+  adHocCustomers: [],
   liveTurns: {},
   setActiveCustomer: (id) => set({ activeCustomerId: id }),
+  // newest first, so a freshly created customer lands at the top of the roster
+  addAdHocCustomer: (customer) => set((s) => ({ adHocCustomers: [customer, ...s.adHocCustomers] })),
   appendTurn: (customerId, turn) =>
     set((s) => ({
       liveTurns: { ...s.liveTurns, [customerId]: [...(s.liveTurns[customerId] ?? []), turn] }

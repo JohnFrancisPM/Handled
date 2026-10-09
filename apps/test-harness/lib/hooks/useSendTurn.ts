@@ -14,7 +14,17 @@ export function useSendTurn() {
   const updateLastPending = useSessionStore((s) => s.updateLastPending);
 
   return useMutation({
-    mutationFn: async ({ customerId, text }: { customerId: string; text: string }) => {
+    mutationFn: async ({
+      customerId,
+      text,
+      fromPhone,
+      customerName
+    }: {
+      customerId: string;
+      text: string;
+      fromPhone?: string; // set only for ad-hoc "new customers" (no fixture row)
+      customerName?: string;
+    }) => {
       const now = Date.now();
       appendTurn(customerId, { role: "user", content: text, ts: now });
       appendTurn(customerId, { role: "assistant", content: "", pending: true, ts: now + 1 });
@@ -22,7 +32,12 @@ export function useSendTurn() {
       const res = await fetch("/api/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerId, text })
+        body: JSON.stringify({
+          customerId,
+          text,
+          ...(fromPhone ? { fromPhone } : {}),
+          ...(customerName ? { customerName } : {})
+        })
       });
       const env = (await res.json()) as ApiResult<TurnResult>;
 

@@ -6,6 +6,8 @@ Handled answers inbound customer texts for home-service businesses (plumbers, el
 
 This repository is a **monorepo** that holds both the **AI-assisted build workflow** used to create Handled (`dev-os/`) and the **three web apps** it produced. Each app is built and deployed independently and does not assume the others exist.
 
+[Deep Dive Video Overview](https://youtu.be/6Ai6IUaXIjE)
+
 ---
 
 ## The three apps

@@ -2,6 +2,13 @@
 
 **The AI Office Manager for Home & Local Service Businesses.**
 
+> **Capstone project for the Agentic AI Product Management + Claude Code Official Dev Certification (Maven, 2026)** — built to demonstrate end-to-end AI product management: scoping, multi-agent system design, model selection, prompt engineering, evaluation, and launch. A real, working product, not a prototype: three deployed apps and a six-agent conversational backend that handles live customer texts.
+>
+> **If you're evaluating my AI PM work, start here:**
+> - **The agent architecture** → [`n8n/flow-breakdown.md`](n8n/flow-breakdown.md) — how a single webhook screens, routes, and answers via 6 specialist agents and 20 tools.
+> - **How I think about quality** → [`apps/customer-app/tests/eval/`](apps/customer-app/tests/eval) — a graded launch-gate eval (any Critical failure blocks launch; emergency recall must hit 100%).
+> - **Product thinking** → [`docs/PRD.md`](docs/PRD.md) — the requirements and tradeoffs the build flowed from.
+
 Handled answers inbound customer texts for home-service businesses (plumbers, electricians, HVAC, etc.) — booking jobs, quoting from configured pricing, triaging emergencies, and rescheduling — then shows the owner what happened in a dashboard.
 
 This repository is a **monorepo** that holds both the **AI-assisted build workflow** used to create Handled (`dev-os/`) and the **three web apps** it produced. Each app is built and deployed independently and does not assume the others exist.
